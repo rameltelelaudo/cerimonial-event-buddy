@@ -1,5 +1,5 @@
 
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { v4 as uuidv4 } from 'uuid';
 import { Invitation } from '@/types/invitation';
 import { toast } from 'sonner';
-import { EventContext } from '@/contexts/EventContext';
+import { useEventContext } from '@/contexts/EventContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface AddInvitationFormProps {
   onAddInvitation: (invitation: Invitation) => void;
@@ -25,7 +27,7 @@ const templates = [
 ];
 
 export const AddInvitationForm = ({ onAddInvitation, onCancel }: AddInvitationFormProps) => {
-  const { events } = useContext(EventContext);
+  const { events } = useEventContext();
   const [activeTab, setActiveTab] = useState('details');
   const [formData, setFormData] = useState<Omit<Invitation, 'id' | 'createdAt' | 'sentCount'>>({
     title: '',

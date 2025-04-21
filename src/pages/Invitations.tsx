@@ -1,5 +1,5 @@
 
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
@@ -10,13 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 import { AddInvitationForm } from '@/components/Invitations/AddInvitationForm';
 import { Invitation } from '@/types/invitation';
-import { EventContext } from '@/contexts/EventContext';
+import { useEventContext } from '@/contexts/EventContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const Invitations = () => {
   const isMobile = useIsMobile();
-  const { events } = useContext(EventContext);
+  const { events } = useEventContext();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   

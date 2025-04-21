@@ -1,9 +1,9 @@
 
-import React, { useContext } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Calendar, CheckSquare, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { EventContext } from '@/contexts/EventContext';
+import { useEventContext } from '@/contexts/EventContext';
 
 interface DashboardCardProps {
   title: string;
@@ -31,7 +31,7 @@ const DashboardCard = ({ title, value, description, icon, linkTo, bgClass }: Das
 );
 
 export const DashboardCards = () => {
-  const { events } = useContext(EventContext);
+  const { events } = useEventContext();
   
   // Calcular dados reais para os cards
   const guestCount = 0; // Será atualizado quando tivermos uma lista real de convidados

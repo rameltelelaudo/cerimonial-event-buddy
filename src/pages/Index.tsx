@@ -1,5 +1,5 @@
 
-import React, { useContext } from 'react';
+import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
@@ -8,14 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Calendar, CheckSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { EventContext } from '@/contexts/EventContext';
+import { useEventContext } from '@/contexts/EventContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const Index = () => {
   const isMobile = useIsMobile();
-  const { events } = useContext(EventContext);
+  const { events } = useEventContext();
   
   const handleAddEvent = () => {
     toast.info("Clique em 'Eventos' no menu para cadastrar um novo evento");
@@ -26,7 +26,7 @@ const Index = () => {
   };
   
   return (
-    <div className="flex min-h-screen flex-col bg-leju-background">
+    <div className="flex min-h-screen flex-col bg-slate-50">
       <Navbar />
       
       <div className="flex flex-1">
@@ -61,7 +61,7 @@ const Index = () => {
                 <CardContent>
                   {events.length > 0 ? (
                     <div className="space-y-4">
-                      {events.slice(0, 3).map((event, index) => (
+                      {events.slice(0, 3).map((event) => (
                         <div key={event.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-leju-pink/5 transition-colors">
                           <div>
                             <h3 className="font-medium">{event.title}</h3>

@@ -1,5 +1,5 @@
 
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { v4 as uuidv4 } from 'uuid';
 import { Task } from '@/types/task';
 import { toast } from 'sonner';
-import { EventContext } from '@/contexts/EventContext';
+import { useEventContext } from '@/contexts/EventContext';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -21,7 +21,7 @@ interface AddTaskFormProps {
 }
 
 export const AddTaskForm = ({ onAddTask, onCancel }: AddTaskFormProps) => {
-  const { events } = useContext(EventContext);
+  const { events } = useEventContext();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [formData, setFormData] = useState<Omit<Task, 'id' | 'dueDate'>>({
     title: '',
