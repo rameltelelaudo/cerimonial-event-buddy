@@ -13,16 +13,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useEventContext } from '@/contexts/EventContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, CalendarPlus, MapPin, Clock } from 'lucide-react';
+import { Calendar, CalendarPlus, MapPin, Clock, Link as LinkIcon, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const Events = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { events, addEvent, setSelectedEvent } = useEventContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showSharePopover, setShowSharePopover] = useState<string | null>(null);
   
   // Estado para o formulário de novo evento
   const [newEvent, setNewEvent] = useState({
@@ -94,6 +96,37 @@ const Events = () => {
     setSelectedEvent(event);
     // Navegar para página de detalhes do evento ou lista de convidados
     navigate('/guest-list');
+  };
+  
+  const getPublicFormUrl = (eventId: string) => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/public-guest-form/${eventId}`;
+  };
+  
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        toast.success("Link copiado para a área de transferência");
+        setShowSharePopover(null);
+      })
+      .catch(() => {
+        toast.error("Erro ao copiar link");
+      });
+  };
+  
+  const shareViaWhatsApp = (eventId: string, eventTitle: string) => {
+    const url = getPublicFormUrl(eventId);
+    const message = encodeURIComponent(`Confirme sua presença no evento "${eventTitle}": ${url}`);
+    window.open(`https://wa.me/?text=${message}`, '_blank');
+    setShowSharePopover(null);
+  };
+  
+  const shareViaEmail = (eventId: string, eventTitle: string) => {
+    const url = getPublicFormUrl(eventId);
+    const subject = encodeURIComponent(`Confirmação de presença: ${eventTitle}`);
+    const body = encodeURIComponent(`Olá,\n\nConfirme sua presença no evento "${eventTitle}" através do link abaixo:\n\n${url}\n\nAguardamos você!`);
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+    setShowSharePopover(null);
   };
   
   return (
@@ -229,11 +262,62 @@ const Events = () => {
               {events.map((event) => (
                 <Card 
                   key={event.id} 
-                  className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => handleSelectEvent(event)}
+                  className="overflow-hidden hover:shadow-md transition-shadow"
                 >
-                  <div className="h-32 bg-leju-pink/20 flex items-center justify-center">
+                  <div className="h-32 bg-leju-pink/20 flex items-center justify-center relative">
                     <Calendar className="h-12 w-12 text-leju-pink/60" />
+                    
+                    <div className="absolute top-2 right-2">
+                      <Popover open={showSharePopover === event.id} onOpenChange={(open) => setShowSharePopover(open ? event.id : null)}>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="icon" className="h-8 w-8 rounded-full bg-white">
+                            <Share2 className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-72" align="end">
+                          <div className="space-y-2">
+                            <h4 className="font-medium">Compartilhar formulário de convite</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Compartilhe este link para que os convidados confirmem presença
+                            </p>
+                            
+                            <div className="flex items-center space-x-2">
+                              <Input 
+                                value={getPublicFormUrl(event.id)} 
+                                readOnly 
+                                className="flex-1 text-xs"
+                              />
+                              <Button 
+                                size="sm" 
+                                className="shrink-0" 
+                                onClick={() => copyToClipboard(getPublicFormUrl(event.id))}
+                              >
+                                Copiar
+                              </Button>
+                            </div>
+                            
+                            <div className="flex space-x-2 pt-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex-1"
+                                onClick={() => shareViaWhatsApp(event.id, event.title)}
+                              >
+                                WhatsApp
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex-1"
+                                onClick={() => shareViaEmail(event.id, event.title)}
+                              >
+                                Email
+                              </Button>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   </div>
                   <CardHeader className="pb-2">
                     <CardTitle>{event.title}</CardTitle>
@@ -243,26 +327,42 @@ const Events = () => {
                     <div className="flex items-start">
                       <Clock className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
                       <span>
-                        {format(event.date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                        {format(new Date(event.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                         {' às '}
-                        {format(event.date, "HH:mm", { locale: ptBR })}
+                        {format(new Date(event.date), "HH:mm", { locale: ptBR })}
                       </span>
                     </div>
                     <div className="flex items-start">
                       <MapPin className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
                       <span>{event.location}</span>
                     </div>
+                    <div className="flex items-center mt-2 pt-2 border-t">
+                      <LinkIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <a 
+                        href={`/public-guest-form/${event.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-leju-pink hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Formulário público de confirmação
+                      </a>
+                    </div>
                   </CardContent>
-                  <CardFooter className="pt-2">
+                  <CardFooter className="grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
-                      className="w-full border-leju-pink text-leju-pink hover:bg-leju-pink/10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectEvent(event);
-                      }}
+                      className="border-leju-pink text-leju-pink hover:bg-leju-pink/10"
+                      onClick={() => handleSelectEvent(event)}
                     >
                       Gerenciar Evento
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-blue-500 text-blue-500 hover:bg-blue-500/10"
+                      onClick={() => navigate(`/finances/${event.id}`)}
+                    >
+                      Financeiro
                     </Button>
                   </CardFooter>
                 </Card>

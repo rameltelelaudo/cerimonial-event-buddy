@@ -1,70 +1,44 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Menu, HelpCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from './Sidebar';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthButton } from './AuthButton';
-import { useEventContext } from '@/contexts/EventContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Navbar = () => {
   const isMobile = useIsMobile();
-  const { selectedEvent } = useEventContext();
   
   return (
-    <header className="w-full border-b bg-white">
-      <div className="container flex h-16 items-center justify-between px-4">
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center">
-            <h1 className="text-2xl font-bold text-leju-pink">
-              Leju App
-            </h1>
-          </Link>
-        </div>
+    <header className="sticky top-0 z-50 w-full border-b bg-background">
+      <div className="flex h-16 items-center px-4 sm:px-6">
+        <Sheet>
+          <SheetTrigger asChild className="lg:hidden">
+            <Button variant="outline" size="icon" className="mr-4 lg:hidden">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 pt-10">
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
         
-        <div className="flex items-center gap-2">
-          {selectedEvent && (
-            <div className="hidden md:block">
-              <span className="text-sm font-medium">
-                Evento atual: <span className="text-leju-pink">{selectedEvent.title}</span>
-              </span>
-            </div>
-          )}
-          
-          {isMobile ? (
-            <div className="flex items-center">
-              <AuthButton />
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="ml-2">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0">
-                  <Sidebar />
-                </SheetContent>
-              </Sheet>
-            </div>
-          ) : (
-            <TooltipProvider>
-              <div className="flex items-center gap-4">
-                <Button variant="outline" asChild>
-                  <Link to="/help">
-                    <HelpCircle className="mr-2 h-4 w-4" />
-                    Ajuda
-                  </Link>
-                </Button>
-                <Button asChild className="bg-leju-pink hover:bg-leju-pink/90">
-                  <Link to="/guest-list">Lista de Convidados</Link>
-                </Button>
-                <AuthButton />
-              </div>
-            </TooltipProvider>
-          )}
+        <Link to="/" className="flex items-center gap-2">
+          <img 
+            src="https://i.ibb.co/X212y5K/images.jpg" 
+            alt="Leju App" 
+            className="h-8 w-auto"
+          />
+          <span className="hidden font-bold sm:inline-block">
+            Leju App
+          </span>
+        </Link>
+        
+        <div className="ml-auto flex items-center space-x-4">
+          <AuthButton />
         </div>
       </div>
     </header>

@@ -64,7 +64,7 @@ const config = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Adding Leju custom colors
+        // Leju custom colors
         "leju-pink": "hsl(var(--primary))",
         "leju-background": "rgb(248 250 252)", // Slate-50
       },

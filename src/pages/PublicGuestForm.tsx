@@ -1,0 +1,274 @@
+
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { GuestGroup } from '@/types/guest';
+
+const guestGroups: GuestGroup[] = [
+  "Família",
+  "Padrinhos",
+  "Amigos",
+  "Colegas de Trabalho",
+  "Fornecedores",
+  "Outros"
+];
+
+const PublicGuestForm = () => {
+  const { eventId } = useParams();
+  const [event, setEvent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [success, setSuccess] = useState(false);
+  
+  const [guest, setGuest] = useState({
+    name: '',
+    email: '',
+    group: 'Família' as GuestGroup,
+    companions: 0,
+    notes: ''
+  });
+  
+  useEffect(() => {
+    // Carregar dados do evento do localStorage
+    const savedEvents = localStorage.getItem('events');
+    if (savedEvents) {
+      try {
+        const events = JSON.parse(savedEvents);
+        const foundEvent = events.find((e: any) => e.id === eventId);
+        if (foundEvent) {
+          // Converter string de data para objeto Date
+          setEvent({
+            ...foundEvent,
+            date: new Date(foundEvent.date)
+          });
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('Erro ao carregar evento:', error);
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
+    }
+  }, [eventId]);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setGuest(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setGuest(prev => ({ ...prev, [name]: parseInt(value) || 0 }));
+  };
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!event) {
+      toast.error("Evento não encontrado");
+      return;
+    }
+    
+    if (!guest.name.trim()) {
+      toast.error("Nome é obrigatório");
+      return;
+    }
+    
+    // Criar novo convidado
+    const newGuest = {
+      id: uuidv4(),
+      name: guest.name.trim(),
+      email: guest.email.trim() || undefined,
+      group: guest.group,
+      companions: guest.companions,
+      notes: guest.notes.trim() || undefined,
+      checkedIn: false
+    };
+    
+    // Salvar no localStorage
+    const savedGuests = localStorage.getItem(`guests_${eventId}`);
+    let guests = [];
+    
+    if (savedGuests) {
+      try {
+        guests = JSON.parse(savedGuests);
+      } catch (error) {
+        console.error('Erro ao carregar convidados:', error);
+      }
+    }
+    
+    guests.push(newGuest);
+    localStorage.setItem(`guests_${eventId}`, JSON.stringify(guests));
+    
+    // Resetar formulário e mostrar mensagem de sucesso
+    setGuest({
+      name: '',
+      email: '',
+      group: 'Família',
+      companions: 0,
+      notes: ''
+    });
+    
+    setSuccess(true);
+    toast.success("Confirmação recebida com sucesso!");
+    
+    // Resetar mensagem de sucesso após alguns segundos
+    setTimeout(() => {
+      setSuccess(false);
+    }, 5000);
+  };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+  
+  if (!event) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center text-red-500">Evento não encontrado</CardTitle>
+            <CardDescription className="text-center">
+              O link para este evento não é válido ou expirou.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="min-h-screen bg-slate-50 py-12 px-4">
+      <div className="max-w-md mx-auto">
+        <Card>
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4">
+              <img 
+                src="https://i.ibb.co/X212y5K/images.jpg" 
+                alt="Leju App" 
+                className="h-12 w-auto mx-auto"
+              />
+            </div>
+            <CardTitle>{event.title}</CardTitle>
+            <CardDescription>
+              {new Date(event.date).toLocaleDateString('pt-BR', { 
+                day: '2-digit', 
+                month: 'long', 
+                year: 'numeric' 
+              })}
+              {' • '}
+              {event.location}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {success ? (
+              <div className="text-center py-6">
+                <h3 className="text-xl text-green-600 font-semibold mb-2">Presença confirmada!</h3>
+                <p className="mb-4">Obrigado por confirmar sua presença.</p>
+                <Button 
+                  onClick={() => setSuccess(false)}
+                  className="bg-leju-pink hover:bg-leju-pink/90"
+                >
+                  Adicionar outro convidado
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome Completo *</Label>
+                  <Input 
+                    id="name" 
+                    name="name"
+                    value={guest.name} 
+                    onChange={handleInputChange} 
+                    placeholder="Digite seu nome completo"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input 
+                    id="email" 
+                    name="email"
+                    type="email" 
+                    value={guest.email} 
+                    onChange={handleInputChange} 
+                    placeholder="seu.email@exemplo.com"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="group">Grupo</Label>
+                  <Select
+                    value={guest.group}
+                    onValueChange={(value) => setGuest({...guest, group: value as GuestGroup})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um grupo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {guestGroups.map((group) => (
+                        <SelectItem key={group} value={group}>
+                          {group}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="companions">Acompanhantes</Label>
+                  <Input 
+                    id="companions" 
+                    name="companions"
+                    type="number" 
+                    min={0}
+                    value={guest.companions} 
+                    onChange={handleNumberInput} 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Observações</Label>
+                  <Textarea 
+                    id="notes" 
+                    name="notes"
+                    value={guest.notes} 
+                    onChange={handleInputChange} 
+                    placeholder="Restrições alimentares, alergias, etc."
+                  />
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-leju-pink hover:bg-leju-pink/90"
+                >
+                  Confirmar Presença
+                </Button>
+              </form>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <p className="text-xs text-muted-foreground">
+              Gerenciado por <a href="/" className="text-leju-pink hover:underline">Leju App</a>
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default PublicGuestForm;
