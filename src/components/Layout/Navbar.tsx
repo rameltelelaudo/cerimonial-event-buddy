@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Menu, HelpCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from './Sidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 export const Navbar = () => {
   const isMobile = useIsMobile();
@@ -34,17 +35,19 @@ export const Navbar = () => {
             </SheetContent>
           </Sheet>
         ) : (
-          <div className="flex items-center gap-4">
-            <Button variant="outline" asChild>
-              <Link to="/help">
-                <HelpCircle className="mr-2 h-4 w-4" />
-                Ajuda
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link to="/guest-list">Lista de Convidados</Link>
-            </Button>
-          </div>
+          <TooltipProvider>
+            <div className="flex items-center gap-4">
+              <Button variant="outline" asChild>
+                <Link to="/help">
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  Ajuda
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link to="/guest-list">Lista de Convidados</Link>
+              </Button>
+            </div>
+          </TooltipProvider>
         )}
       </div>
     </header>
