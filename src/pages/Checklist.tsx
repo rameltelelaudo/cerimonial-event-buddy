@@ -1,25 +1,30 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Check, Search, UserCheck } from 'lucide-react';
+import { Check, Search, UserCheck, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { useEventContext } from '@/contexts/EventContext';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface GuestItemProps {
+  id: string;
   name: string;
   companions: number;
   checkedIn: boolean;
-  onCheckIn: () => void;
+  onCheckIn: (id: string) => void;
 }
 
-const GuestItem = ({ name, companions, checkedIn, onCheckIn }: GuestItemProps) => {
+const GuestItem = ({ id, name, companions, checkedIn, onCheckIn }: GuestItemProps) => {
   const isMobile = useIsMobile();
 
   if (isMobile) {
@@ -37,7 +42,7 @@ const GuestItem = ({ name, companions, checkedIn, onCheckIn }: GuestItemProps) =
               size="sm" 
               variant={checkedIn ? "outline" : "default"}
               className={checkedIn ? "bg-green-100 text-green-800 border-green-300" : "bg-leju-pink hover:bg-leju-pink/90"}
-              onClick={onCheckIn}
+              onClick={() => onCheckIn(id)}
               disabled={checkedIn}
             >
               {checkedIn ? (
@@ -76,7 +81,7 @@ const GuestItem = ({ name, companions, checkedIn, onCheckIn }: GuestItemProps) =
           size="sm" 
           variant={checkedIn ? "outline" : "default"}
           className={checkedIn ? "bg-green-100 text-green-800 border-green-300" : "bg-leju-pink hover:bg-leju-pink/90"}
-          onClick={onCheckIn}
+          onClick={() => onCheckIn(id)}
           disabled={checkedIn}
         >
           {checkedIn ? (
@@ -99,28 +104,59 @@ const GuestItem = ({ name, companions, checkedIn, onCheckIn }: GuestItemProps) =
 const Checklist = () => {
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+  const { selectedEvent } = useEventContext();
   
-  // Mock guest data for demonstration
-  const [guests, setGuests] = useState([
-    { id: '1', name: 'Ana Silva', companions: 2, checkedIn: false },
-    { id: '2', name: 'Carlos Oliveira', companions: 1, checkedIn: true },
-    { id: '3', name: 'Mariana Santos', companions: 0, checkedIn: false },
-    { id: '4', name: 'Roberto Pereira', companions: 3, checkedIn: false },
-    { id: '5', name: 'Juliana Costa', companions: 1, checkedIn: true },
-  ]);
+  // Usar useState com callback para inicializar guests do localStorage
+  const [guests, setGuests] = useState(() => {
+    if (!selectedEvent) return [];
+    
+    const savedGuests = localStorage.getItem(`guests_${selectedEvent.id}`);
+    if (savedGuests) {
+      try {
+        return JSON.parse(savedGuests);
+      } catch (error) {
+        console.error('Erro ao carregar convidados:', error);
+        return [];
+      }
+    }
+    return [];
+  });
+  
+  // Redirecionamento se não houver evento selecionado
+  useEffect(() => {
+    if (!selectedEvent) {
+      toast.info("Selecione um evento primeiro");
+      navigate('/events');
+    }
+  }, [selectedEvent, navigate]);
   
   const handleCheckIn = (id: string) => {
+    if (!selectedEvent) return;
+    
     setGuests(guests.map(guest => 
       guest.id === id 
-        ? { ...guest, checkedIn: true } 
+        ? { ...guest, checkedIn: true, checkInTime: new Date() } 
         : guest
     ));
+    
     toast.success("Check-in realizado com sucesso!");
   };
+  
+  // Salvar guests no localStorage quando mudar
+  useEffect(() => {
+    if (selectedEvent && guests.length > 0) {
+      localStorage.setItem(`guests_${selectedEvent.id}`, JSON.stringify(guests));
+    }
+  }, [guests, selectedEvent]);
   
   const filteredGuests = guests.filter(guest => 
     guest.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (!selectedEvent) {
+    return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -131,8 +167,24 @@ const Checklist = () => {
         
         <main className="flex-1 p-4 sm:p-6">
           <div className="mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold">Checklist de Convidados</h1>
-            <p className="text-muted-foreground mt-1">
+            <div className="flex items-center gap-2 mb-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/events')}
+                className="h-8 w-8"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-2xl sm:text-3xl font-bold">{selectedEvent.title}</h1>
+            </div>
+            <div className="text-muted-foreground mb-4">
+              {format(new Date(selectedEvent.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              {' • '}
+              {selectedEvent.location}
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Checklist de Convidados</h2>
+            <p className="text-muted-foreground">
               Realize o check-in dos convidados no dia do evento
             </p>
           </div>
@@ -150,7 +202,20 @@ const Checklist = () => {
           </div>
           
           <div className="rounded-lg border bg-card">
-            {isMobile ? (
+            {guests.length === 0 ? (
+              <div className="p-8 text-center">
+                <h3 className="text-lg font-medium mb-2">Nenhum convidado cadastrado</h3>
+                <p className="text-muted-foreground mb-4">
+                  Adicione convidados à lista do evento para realizar o check-in
+                </p>
+                <Button 
+                  onClick={() => navigate('/guest-list')}
+                  className="bg-leju-pink hover:bg-leju-pink/90"
+                >
+                  Gerenciar Convidados
+                </Button>
+              </div>
+            ) : isMobile ? (
               <div className="p-4">
                 <div className="mb-4 flex justify-between items-center">
                   <h2 className="text-lg font-semibold">Convidados</h2>
@@ -165,10 +230,11 @@ const Checklist = () => {
                   filteredGuests.map(guest => (
                     <GuestItem 
                       key={guest.id}
+                      id={guest.id}
                       name={guest.name}
                       companions={guest.companions}
                       checkedIn={guest.checkedIn}
-                      onCheckIn={() => handleCheckIn(guest.id)}
+                      onCheckIn={handleCheckIn}
                     />
                   ))
                 )}
@@ -192,10 +258,11 @@ const Checklist = () => {
                     filteredGuests.map(guest => (
                       <GuestItem 
                         key={guest.id}
+                        id={guest.id}
                         name={guest.name}
                         companions={guest.companions}
                         checkedIn={guest.checkedIn}
-                        onCheckIn={() => handleCheckIn(guest.id)}
+                        onCheckIn={handleCheckIn}
                       />
                     ))
                   )}

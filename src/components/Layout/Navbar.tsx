@@ -7,9 +7,12 @@ import { Menu, HelpCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from './Sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { AuthButton } from './AuthButton';
+import { useEventContext } from '@/contexts/EventContext';
 
 export const Navbar = () => {
   const isMobile = useIsMobile();
+  const { selectedEvent } = useEventContext();
   
   return (
     <header className="w-full border-b bg-white">
@@ -22,33 +25,47 @@ export const Navbar = () => {
           </Link>
         </div>
         
-        {isMobile ? (
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0">
-              <Sidebar />
-            </SheetContent>
-          </Sheet>
-        ) : (
-          <TooltipProvider>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" asChild>
-                <Link to="/help">
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  Ajuda
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link to="/guest-list">Lista de Convidados</Link>
-              </Button>
+        <div className="flex items-center gap-2">
+          {selectedEvent && (
+            <div className="hidden md:block">
+              <span className="text-sm font-medium">
+                Evento atual: <span className="text-leju-pink">{selectedEvent.title}</span>
+              </span>
             </div>
-          </TooltipProvider>
-        )}
+          )}
+          
+          {isMobile ? (
+            <div className="flex items-center">
+              <AuthButton />
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="ml-2">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0">
+                  <Sidebar />
+                </SheetContent>
+              </Sheet>
+            </div>
+          ) : (
+            <TooltipProvider>
+              <div className="flex items-center gap-4">
+                <Button variant="outline" asChild>
+                  <Link to="/help">
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    Ajuda
+                  </Link>
+                </Button>
+                <Button asChild className="bg-leju-pink hover:bg-leju-pink/90">
+                  <Link to="/guest-list">Lista de Convidados</Link>
+                </Button>
+                <AuthButton />
+              </div>
+            </TooltipProvider>
+          )}
+        </div>
       </div>
     </header>
   );
