@@ -98,7 +98,7 @@
   }
 
   body {
-    @apply bg-white text-foreground;
+    @apply bg-leju-background text-foreground;
   }
 }
 

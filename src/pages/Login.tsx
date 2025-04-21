@@ -17,29 +17,31 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulação de login
+    // Verificação de credenciais específicas
     setTimeout(() => {
-      // Normalmente aqui teria uma verificação real
-      if (email.trim() && password.trim()) {
+      if (email === 'admin@admin.com' && password === 'leju') {
         toast.success('Login realizado com sucesso');
         localStorage.setItem('isLoggedIn', 'true');
         navigate('/');
       } else {
-        toast.error('Por favor, preencha todos os campos');
+        toast.error('Credenciais inválidas. Use admin@admin.com e senha leju');
       }
       setIsLoading(false);
     }, 1000);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-leju-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <img src="https://i.ibb.co/212y56K/images.jpg" alt="Leju Assessoria" className="h-24 object-contain" />
+          </div>
           <h1 className="text-3xl font-bold text-leju-pink mb-2">Leju Assessoria</h1>
           <p className="text-gray-500">Sistema de Gerenciamento de Eventos</p>
         </div>
         
-        <Card>
+        <Card className="shadow-lg border-leju-pink/20">
           <CardHeader>
             <CardTitle>Login</CardTitle>
             <CardDescription>
@@ -53,7 +55,7 @@ const Login = () => {
                 <Input 
                   id="email" 
                   type="email" 
-                  placeholder="seu@email.com" 
+                  placeholder="admin@admin.com" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -64,6 +66,7 @@ const Login = () => {
                 <Input 
                   id="password" 
                   type="password" 
+                  placeholder="••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
