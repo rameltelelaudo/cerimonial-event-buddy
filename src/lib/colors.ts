@@ -20,4 +20,5 @@ export const colors = {
 // No arquivo tailwind.config.js, essas cores serão utilizadas como:
 // colors: {
 //   'leju-pink': colors.pink.DEFAULT,
+//   'leju-background': colors.pink[50],
 // }

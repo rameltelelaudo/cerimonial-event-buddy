@@ -56,6 +56,7 @@ export default {
         },
         // Adicionar cores personalizadas Leju
         'leju-pink': colors.pink.DEFAULT,
+        'leju-background': colors.pink[50], // Adicionando cor de fundo Leju
         'ceremonial-purple': '#6A0DAD', // Uma cor secundária para botões importantes
       },
       borderRadius: {
