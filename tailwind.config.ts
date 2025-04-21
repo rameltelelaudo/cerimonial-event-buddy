@@ -63,11 +63,10 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				ceremonial: {
-					purple: '#8B5CF6',
-					'light-purple': '#D6BCFA',
-					gold: '#F59E0B',
-					'light-gold': '#FDE68A',
+				leju: {
+					pink: '#FF69B4',
+					'light-pink': '#FFAFC5',
+					white: '#FFFFFF',
 					background: '#F9FAFB',
 				}
 			},

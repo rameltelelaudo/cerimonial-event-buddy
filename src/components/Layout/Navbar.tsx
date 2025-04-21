@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Menu, HelpCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from './Sidebar';
 
@@ -15,8 +15,8 @@ export const Navbar = () => {
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center">
           <Link to="/" className="flex items-center">
-            <h1 className="text-2xl font-bold text-ceremonial-purple">
-              EventBuddy
+            <h1 className="text-2xl font-bold text-leju-pink">
+              Leju App
             </h1>
           </Link>
         </div>
@@ -36,7 +36,10 @@ export const Navbar = () => {
         ) : (
           <div className="flex items-center gap-4">
             <Button variant="outline" asChild>
-              <Link to="/">Ajuda</Link>
+              <Link to="/help">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Ajuda
+              </Link>
             </Button>
             <Button asChild>
               <Link to="/guest-list">Lista de Convidados</Link>

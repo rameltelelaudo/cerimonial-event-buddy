@@ -14,7 +14,7 @@ interface DashboardCardProps {
 
 const DashboardCard = ({ title, value, description, icon, linkTo }: DashboardCardProps) => (
   <Link to={linkTo}>
-    <Card className="transition-all hover:shadow-md hover:border-ceremonial-purple/50">
+    <Card className="transition-all hover:shadow-md hover:border-leju-pink/50">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         {icon}
@@ -34,14 +34,14 @@ export const DashboardCards = () => {
         title="Convidados"
         value="125"
         description="32 confirmados"
-        icon={<Users className="h-4 w-4 text-ceremonial-purple" />}
+        icon={<Users className="h-4 w-4 text-leju-pink" />}
         linkTo="/guest-list"
       />
       <DashboardCard
         title="Eventos"
         value="3"
         description="Próximo em 15 dias"
-        icon={<Calendar className="h-4 w-4 text-ceremonial-gold" />}
+        icon={<Calendar className="h-4 w-4 text-leju-pink" />}
         linkTo="/events"
       />
       <DashboardCard
