@@ -9,7 +9,136 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          location: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          location: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          location?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      finances: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          event_id: string
+          id: string
+          status: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date: string
+          description: string
+          event_id: string
+          id?: string
+          status: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          event_id?: string
+          id?: string
+          status?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finances_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guests: {
+        Row: {
+          check_in_time: string | null
+          checked_in: boolean
+          companions: number
+          created_at: string
+          email: string | null
+          event_id: string
+          group_type: string
+          id: string
+          name: string
+          notes: string | null
+          user_id: string | null
+        }
+        Insert: {
+          check_in_time?: string | null
+          checked_in?: boolean
+          companions?: number
+          created_at?: string
+          email?: string | null
+          event_id: string
+          group_type: string
+          id?: string
+          name: string
+          notes?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          check_in_time?: string | null
+          checked_in?: boolean
+          companions?: number
+          created_at?: string
+          email?: string | null
+          event_id?: string
+          group_type?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

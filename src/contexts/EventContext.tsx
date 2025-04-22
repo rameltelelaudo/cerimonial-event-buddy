@@ -1,12 +1,16 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Event } from '@/types/event';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './AuthContext';
+import { toast } from 'sonner';
 
 interface EventContextType {
   selectedEvent: Event | null;
   setSelectedEvent: (event: Event | null) => void;
   events: Event[];
-  addEvent: (event: Event) => void;
+  addEvent: (event: Omit<Event, 'id'>) => Promise<Event | null>;
+  loading: boolean;
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -22,56 +26,116 @@ export const useEventContext = () => {
 export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  // Carregar eventos do localStorage ao iniciar
+  // Fetch events from Supabase when user is authenticated
   useEffect(() => {
-    const savedEvents = localStorage.getItem('events');
-    if (savedEvents) {
+    const fetchEvents = async () => {
+      if (!user) {
+        setEvents([]);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const parsedEvents = JSON.parse(savedEvents);
-        // Converter strings de data para objetos Date
-        const eventsWithDates = parsedEvents.map((event: any) => ({
-          ...event,
-          date: new Date(event.date)
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .order('date', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        // Transform data to match Event type
+        const transformedEvents: Event[] = data.map(event => ({
+          id: event.id,
+          title: event.title,
+          date: new Date(event.date),
+          location: event.location,
+          description: event.description || '',
+          type: event.type || 'Casamento',
+          status: event.status || 'upcoming'
         }));
-        setEvents(eventsWithDates);
-        
-        // Se houver um evento selecionado salvo, restaurá-lo
-        const savedSelectedEventId = localStorage.getItem('selectedEventId');
-        if (savedSelectedEventId) {
-          const savedEvent = eventsWithDates.find((e: Event) => e.id === savedSelectedEventId);
-          if (savedEvent) {
-            setSelectedEvent(savedEvent);
+
+        setEvents(transformedEvents);
+
+        // If there was a selected event, try to find it in the new data
+        if (selectedEvent) {
+          const updatedSelectedEvent = transformedEvents.find(e => e.id === selectedEvent.id);
+          if (updatedSelectedEvent) {
+            setSelectedEvent(updatedSelectedEvent);
           }
         }
-      } catch (error) {
-        console.error('Erro ao carregar eventos:', error);
+      } catch (error: any) {
+        console.error('Error fetching events:', error);
+        toast.error('Erro ao carregar eventos: ' + error.message);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, []);
+    };
 
-  // Salvar eventos no localStorage quando mudar
-  useEffect(() => {
-    if (events.length > 0) {
-      localStorage.setItem('events', JSON.stringify(events));
-    }
-  }, [events]);
+    fetchEvents();
+  }, [user]);
 
-  // Salvar ID do evento selecionado
-  useEffect(() => {
-    if (selectedEvent) {
-      localStorage.setItem('selectedEventId', selectedEvent.id);
-    } else {
-      localStorage.removeItem('selectedEventId');
+  // Function to add a new event
+  const addEvent = async (eventData: Omit<Event, 'id'>): Promise<Event | null> => {
+    if (!user) {
+      toast.error('Você precisa estar logado para adicionar eventos');
+      return null;
     }
-  }, [selectedEvent]);
 
-  const addEvent = (newEvent: Event) => {
-    setEvents(prevEvents => [...prevEvents, newEvent]);
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .insert({
+          title: eventData.title,
+          date: eventData.date.toISOString(),
+          location: eventData.location,
+          description: eventData.description,
+          type: eventData.type,
+          status: eventData.status,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Transform the returned data to match Event type
+      const newEvent: Event = {
+        id: data.id,
+        title: data.title,
+        date: new Date(data.date),
+        location: data.location,
+        description: data.description || '',
+        type: data.type || 'Casamento',
+        status: data.status || 'upcoming'
+      };
+
+      // Update local state
+      setEvents(prev => [newEvent, ...prev]);
+      
+      return newEvent;
+    } catch (error: any) {
+      console.error('Error adding event:', error);
+      toast.error('Erro ao adicionar evento: ' + error.message);
+      return null;
+    }
   };
 
   return (
-    <EventContext.Provider value={{ selectedEvent, setSelectedEvent, events, addEvent }}>
+    <EventContext.Provider value={{ 
+      selectedEvent, 
+      setSelectedEvent, 
+      events, 
+      addEvent,
+      loading
+    }}>
       {children}
     </EventContext.Provider>
   );

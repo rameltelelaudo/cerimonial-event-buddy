@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { GuestGroup } from '@/types/guest';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 const guestGroups: GuestGroup[] = [
   "Família",
@@ -25,6 +26,7 @@ const PublicGuestForm = () => {
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   
   const [guest, setGuest] = useState({
     name: '',
@@ -35,27 +37,37 @@ const PublicGuestForm = () => {
   });
   
   useEffect(() => {
-    // Carregar dados do evento do localStorage
-    const savedEvents = localStorage.getItem('events');
-    if (savedEvents) {
+    const fetchEvent = async () => {
+      if (!eventId) {
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const events = JSON.parse(savedEvents);
-        const foundEvent = events.find((e: any) => e.id === eventId);
-        if (foundEvent) {
-          // Converter string de data para objeto Date
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', eventId)
+          .single();
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
           setEvent({
-            ...foundEvent,
-            date: new Date(foundEvent.date)
+            ...data,
+            date: new Date(data.date)
           });
         }
-        setLoading(false);
       } catch (error) {
-        console.error('Erro ao carregar evento:', error);
+        console.error('Error fetching event:', error);
+      } finally {
         setLoading(false);
       }
-    } else {
-      setLoading(false);
-    }
+    };
+    
+    fetchEvent();
   }, [eventId]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -68,7 +80,7 @@ const PublicGuestForm = () => {
     setGuest(prev => ({ ...prev, [name]: parseInt(value) || 0 }));
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!event) {
@@ -81,54 +93,57 @@ const PublicGuestForm = () => {
       return;
     }
     
-    // Criar novo convidado
-    const newGuest = {
-      id: uuidv4(),
-      name: guest.name.trim(),
-      email: guest.email.trim() || undefined,
-      group: guest.group,
-      companions: guest.companions,
-      notes: guest.notes.trim() || undefined,
-      checkedIn: false
-    };
+    setSubmitting(true);
     
-    // Salvar no localStorage
-    const savedGuests = localStorage.getItem(`guests_${eventId}`);
-    let guests = [];
-    
-    if (savedGuests) {
-      try {
-        guests = JSON.parse(savedGuests);
-      } catch (error) {
-        console.error('Erro ao carregar convidados:', error);
+    try {
+      // Salvar convidado no Supabase
+      const { data, error } = await supabase
+        .from('guests')
+        .insert({
+          event_id: eventId,
+          name: guest.name.trim(),
+          email: guest.email.trim() || null,
+          group_type: guest.group,
+          companions: guest.companions,
+          notes: guest.notes.trim() || null,
+          checked_in: false,
+          user_id: event.user_id // Important: associate the guest with the event owner
+        })
+        .select();
+        
+      if (error) {
+        throw error;
       }
+      
+      // Resetar formulário e mostrar mensagem de sucesso
+      setGuest({
+        name: '',
+        email: '',
+        group: 'Família',
+        companions: 0,
+        notes: ''
+      });
+      
+      setSuccess(true);
+      toast.success("Confirmação recebida com sucesso!");
+      
+      // Resetar mensagem de sucesso após alguns segundos
+      setTimeout(() => {
+        setSuccess(false);
+      }, 5000);
+    } catch (error: any) {
+      console.error('Error adding guest:', error);
+      toast.error("Erro ao confirmar presença: " + error.message);
+    } finally {
+      setSubmitting(false);
     }
-    
-    guests.push(newGuest);
-    localStorage.setItem(`guests_${eventId}`, JSON.stringify(guests));
-    
-    // Resetar formulário e mostrar mensagem de sucesso
-    setGuest({
-      name: '',
-      email: '',
-      group: 'Família',
-      companions: 0,
-      notes: ''
-    });
-    
-    setSuccess(true);
-    toast.success("Confirmação recebida com sucesso!");
-    
-    // Resetar mensagem de sucesso após alguns segundos
-    setTimeout(() => {
-      setSuccess(false);
-    }, 5000);
   };
   
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p>Carregando...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-leju-pink" />
+        <span className="ml-2">Carregando...</span>
       </div>
     );
   }
@@ -254,8 +269,16 @@ const PublicGuestForm = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-leju-pink hover:bg-leju-pink/90"
+                  disabled={submitting}
                 >
-                  Confirmar Presença
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    "Confirmar Presença"
+                  )}
                 </Button>
               </form>
             )}

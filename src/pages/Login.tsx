@@ -1,96 +1,188 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
+  
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
-
-  const handleSubmit = (e: React.FormEvent) => {
+  
+  useEffect(() => {
+    // If user is already logged in, redirect to events page
+    if (user) {
+      navigate('/events');
+    }
+  }, [user, navigate]);
+  
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error('Por favor, preencha todos os campos');
+      return;
+    }
+    
     setIsLoading(true);
     
-    // Verificação de credenciais específicas
-    setTimeout(() => {
-      if (email === 'admin@admin.com' && password === 'leju') {
-        toast.success('Login realizado com sucesso');
-        localStorage.setItem('isLoggedIn', 'true');
-        navigate('/');
-      } else {
-        toast.error('Credenciais inválidas. Use admin@admin.com e senha leju');
-      }
+    try {
+      await signIn(email, password);
+    } catch (error) {
+      console.error('Login error:', error);
+      // Error is already handled in the AuthContext
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
-
+  
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error('Por favor, preencha todos os campos');
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast.error('A senha deve ter no mínimo 6 caracteres');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      await signUp(email, password);
+      setActiveTab('login');
+    } catch (error) {
+      console.error('SignUp error:', error);
+      // Error is already handled in the AuthContext
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-leju-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <img src="https://i.ibb.co/212y56K/images.jpg" alt="Leju Assessoria" className="h-24 object-contain" />
-          </div>
-          <h1 className="text-3xl font-bold text-leju-pink mb-2">Leju Assessoria</h1>
-          <p className="text-gray-500">Sistema de Gerenciamento de Eventos</p>
+          <img 
+            src="https://i.ibb.co/X212y5K/images.jpg" 
+            alt="Leju App" 
+            className="h-16 w-auto mx-auto"
+          />
+          <h1 className="text-3xl font-bold mt-4 text-leju-pink">Leju App</h1>
+          <p className="text-muted-foreground mt-2">
+            Gerencie seus eventos e cerimônias de forma simples e eficiente
+          </p>
         </div>
         
-        <Card className="shadow-lg border-leju-pink/20">
-          <CardHeader>
-            <CardTitle>Login</CardTitle>
-            <CardDescription>
-              Entre com suas credenciais para acessar o sistema
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Bem-vindo de volta</CardTitle>
+            <CardDescription className="text-center">
+              Entre com sua conta para acessar o sistema
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="admin@admin.com" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  placeholder="••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full bg-leju-pink hover:bg-leju-pink/90"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Entrando...' : 'Entrar'}
-              </Button>
-            </form>
+            <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="register">Cadastro</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="login">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password">Senha</Label>
+                      <Button variant="link" type="button" className="px-0 h-auto text-xs font-normal">
+                        Esqueceu a senha?
+                      </Button>
+                    </div>
+                    <Input 
+                      id="password" 
+                      type="password" 
+                      placeholder="******"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-leju-pink hover:bg-leju-pink/90"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Entrando..." : "Entrar"}
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="register">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="register-email">Email</Label>
+                    <Input 
+                      id="register-email" 
+                      type="email" 
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="register-password">Senha</Label>
+                    <Input 
+                      id="register-password" 
+                      type="password" 
+                      placeholder="******"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Mínimo de 6 caracteres
+                    </p>
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-leju-pink hover:bg-leju-pink/90"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Criando conta..." : "Criar conta"}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
           </CardContent>
-          <CardFooter className="flex justify-center text-sm text-muted-foreground">
-            Desenvolvido por Ramel Tecnologia
+          <CardFooter className="flex justify-center">
+            <p className="text-xs text-muted-foreground text-center">
+              Ao continuar, você concorda com os Termos de Serviço e Política de Privacidade
+            </p>
           </CardFooter>
         </Card>
-        
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <a href="https://lejuassessoria.com.br" target="_blank" rel="noopener noreferrer" className="hover:underline">
-            lejuassessoria.com.br
-          </a>
-        </div>
       </div>
     </div>
   );

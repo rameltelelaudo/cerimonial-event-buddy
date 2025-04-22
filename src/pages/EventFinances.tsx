@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
 import { Button } from '@/components/ui/button';
@@ -13,10 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus, Download, DollarSign, CreditCard, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Download, Trash2, Loader2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FinanceItem {
   id: string;
@@ -57,6 +57,8 @@ const EventFinances = () => {
   const [event, setEvent] = useState<any>(null);
   const [finances, setFinances] = useState<FinanceItem[]>([]);
   const [activeTab, setActiveTab] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newItem, setNewItem] = useState({
@@ -69,55 +71,78 @@ const EventFinances = () => {
   });
   
   useEffect(() => {
-    // Carregar evento
-    const savedEvents = localStorage.getItem('events');
-    if (savedEvents && eventId) {
+    const fetchEventAndFinances = async () => {
+      if (!eventId) {
+        toast.error("ID do evento não fornecido");
+        navigate('/events');
+        return;
+      }
+      
       try {
-        const events = JSON.parse(savedEvents);
-        const foundEvent = events.find((e: any) => e.id === eventId);
-        if (foundEvent) {
+        setLoading(true);
+        
+        // Fetch event
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', eventId)
+          .single();
+          
+        if (eventError) {
+          throw eventError;
+        }
+        
+        if (eventData) {
           setEvent({
-            ...foundEvent,
-            date: new Date(foundEvent.date)
+            ...eventData,
+            date: new Date(eventData.date)
           });
+          
+          // Fetch finances for this event
+          const { data: financeData, error: financeError } = await supabase
+            .from('finances')
+            .select('*')
+            .eq('event_id', eventId)
+            .order('date', { ascending: false });
+            
+          if (financeError) {
+            throw financeError;
+          }
+          
+          // Transform data
+          const transformedFinances: FinanceItem[] = financeData.map(item => ({
+            id: item.id,
+            description: item.description,
+            amount: Number(item.amount),
+            date: new Date(item.date),
+            category: item.category,
+            type: item.type as 'income' | 'expense',
+            status: item.status as 'paid' | 'pending'
+          }));
+          
+          setFinances(transformedFinances);
         } else {
           toast.error("Evento não encontrado");
           navigate('/events');
         }
-      } catch (error) {
-        console.error('Erro ao carregar evento:', error);
+      } catch (error: any) {
+        console.error('Error fetching data:', error);
+        toast.error('Erro ao carregar dados: ' + error.message);
+        navigate('/events');
+      } finally {
+        setLoading(false);
       }
-    }
+    };
     
-    // Carregar finanças
-    const savedFinances = localStorage.getItem(`finances_${eventId}`);
-    if (savedFinances) {
-      try {
-        const parsedFinances = JSON.parse(savedFinances);
-        // Converter strings de data para objetos Date
-        setFinances(parsedFinances.map((item: any) => ({
-          ...item,
-          date: new Date(item.date)
-        })));
-      } catch (error) {
-        console.error('Erro ao carregar finanças:', error);
-      }
-    }
+    fetchEventAndFinances();
   }, [eventId, navigate]);
-  
-  // Salvar finanças no localStorage quando mudar
-  useEffect(() => {
-    if (eventId && finances.length > 0) {
-      localStorage.setItem(`finances_${eventId}`, JSON.stringify(finances));
-    }
-  }, [finances, eventId]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewItem(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleAddFinanceItem = (e: React.FormEvent) => {
+  const handleAddFinanceItem = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!newItem.description || !newItem.amount || !newItem.category) {
@@ -131,42 +156,100 @@ const EventFinances = () => {
       return;
     }
     
-    const financeItem: FinanceItem = {
-      id: uuidv4(),
-      description: newItem.description,
-      amount: amount,
-      date: new Date(newItem.date),
-      category: newItem.category,
-      type: newItem.type,
-      status: newItem.status
-    };
+    setSubmitting(true);
     
-    setFinances(prev => [...prev, financeItem]);
-    
-    // Resetar formulário
-    setNewItem({
-      description: '',
-      amount: '',
-      date: format(new Date(), 'yyyy-MM-dd'),
-      category: '',
-      type: 'expense',
-      status: 'pending'
-    });
-    
-    setIsAddDialogOpen(false);
-    toast.success(`${newItem.type === 'income' ? 'Receita' : 'Despesa'} adicionada com sucesso`);
+    try {
+      const { data, error } = await supabase
+        .from('finances')
+        .insert({
+          event_id: eventId,
+          description: newItem.description,
+          amount: amount,
+          date: new Date(newItem.date).toISOString(),
+          category: newItem.category,
+          type: newItem.type,
+          status: newItem.status,
+          user_id: event.user_id
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Add new item to state
+      const newFinanceItem: FinanceItem = {
+        id: data.id,
+        description: data.description,
+        amount: Number(data.amount),
+        date: new Date(data.date),
+        category: data.category,
+        type: data.type,
+        status: data.status
+      };
+      
+      setFinances(prev => [newFinanceItem, ...prev]);
+      
+      // Reset form
+      setNewItem({
+        description: '',
+        amount: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        category: '',
+        type: 'expense',
+        status: 'pending'
+      });
+      
+      setIsAddDialogOpen(false);
+      toast.success(`${newItem.type === 'income' ? 'Receita' : 'Despesa'} adicionada com sucesso`);
+    } catch (error: any) {
+      console.error('Error adding finance item:', error);
+      toast.error('Erro ao adicionar item: ' + error.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
   
-  const handleDeleteItem = (id: string) => {
-    setFinances(prev => prev.filter(item => item.id !== id));
-    toast.success("Item removido com sucesso");
+  const handleDeleteItem = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('finances')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      setFinances(prev => prev.filter(item => item.id !== id));
+      toast.success("Item removido com sucesso");
+    } catch (error: any) {
+      console.error('Error deleting item:', error);
+      toast.error('Erro ao remover item: ' + error.message);
+    }
   };
   
-  const handleUpdateStatus = (id: string, status: 'paid' | 'pending') => {
-    setFinances(prev => prev.map(item => 
-      item.id === id ? { ...item, status } : item
-    ));
-    toast.success("Status atualizado com sucesso");
+  const handleUpdateStatus = async (id: string, status: 'paid' | 'pending') => {
+    try {
+      const { error } = await supabase
+        .from('finances')
+        .update({ status })
+        .eq('id', id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      setFinances(prev => prev.map(item => 
+        item.id === id ? { ...item, status } : item
+      ));
+      
+      toast.success("Status atualizado com sucesso");
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error('Erro ao atualizar status: ' + error.message);
+    }
   };
   
   const exportToCSV = () => {
@@ -201,7 +284,7 @@ const EventFinances = () => {
     toast.success("Dados financeiros exportados com sucesso");
   };
   
-  // Filtrar itens com base na aba ativa
+  // Filter items based on active tab
   const filteredItems = finances.filter(item => {
     if (activeTab === 'all') return true;
     if (activeTab === 'incomes') return item.type === 'income';
@@ -210,7 +293,7 @@ const EventFinances = () => {
     return true;
   });
   
-  // Calcular totais
+  // Calculate totals
   const totalIncomes = finances
     .filter(item => item.type === 'income')
     .reduce((sum, item) => sum + item.amount, 0);
@@ -225,8 +308,13 @@ const EventFinances = () => {
     .filter(item => item.type === 'expense' && item.status === 'pending')
     .reduce((sum, item) => sum + item.amount, 0);
   
-  if (!event) {
-    return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-leju-pink" />
+        <span className="ml-2">Carregando dados financeiros...</span>
+      </div>
+    );
   }
 
   return (
@@ -384,14 +472,23 @@ const EventFinances = () => {
                           variant="outline" 
                           type="button" 
                           onClick={() => setIsAddDialogOpen(false)}
+                          disabled={submitting}
                         >
                           Cancelar
                         </Button>
                         <Button 
                           type="submit" 
                           className="bg-leju-pink hover:bg-leju-pink/90"
+                          disabled={submitting}
                         >
-                          Adicionar
+                          {submitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Adicionando...
+                            </>
+                          ) : (
+                            "Adicionar"
+                          )}
                         </Button>
                       </div>
                     </form>

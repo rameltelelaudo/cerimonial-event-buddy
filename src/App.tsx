@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import GuestList from "./pages/GuestList";
 import Events from "./pages/Events";
@@ -22,55 +23,54 @@ const queryClient = new QueryClient();
 
 // Componente de proteção de rota
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  const { user, loading } = useAuth();
   
-  if (!isLoggedIn) {
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
+  
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
   
   return <>{children}</>;
 };
 
+const AppRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/public-guest-form/:eventId" element={<PublicGuestForm />} />
+      
+      {/* Rotas protegidas */}
+      <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
+      <Route path="/guest-list" element={<ProtectedRoute><GuestList /></ProtectedRoute>} />
+      <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+      <Route path="/checklist" element={<ProtectedRoute><Checklist /></ProtectedRoute>} />
+      <Route path="/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
+      <Route path="/invitations" element={<ProtectedRoute><Invitations /></ProtectedRoute>} />
+      <Route path="/finances/:eventId" element={<ProtectedRoute><EventFinances /></ProtectedRoute>} />
+      <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
+      
+      {/* Rota de fallback */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => {
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  
-  useEffect(() => {
-    // Simular carregamento inicial para verificar autenticação
-    setTimeout(() => {
-      setIsCheckingAuth(false);
-    }, 500);
-  }, []);
-  
-  if (isCheckingAuth) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  }
-  
   return (
     <QueryClientProvider client={queryClient}>
-      <EventProvider>
-        <BrowserRouter>
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/public-guest-form/:eventId" element={<PublicGuestForm />} />
-            
-            {/* Rotas protegidas */}
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
-            <Route path="/guest-list" element={<ProtectedRoute><GuestList /></ProtectedRoute>} />
-            <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-            <Route path="/checklist" element={<ProtectedRoute><Checklist /></ProtectedRoute>} />
-            <Route path="/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
-            <Route path="/invitations" element={<ProtectedRoute><Invitations /></ProtectedRoute>} />
-            <Route path="/finances/:eventId" element={<ProtectedRoute><EventFinances /></ProtectedRoute>} />
-            <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
-            
-            {/* Rota de fallback */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </EventProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <EventProvider>
+            <Toaster />
+            <Sonner />
+            <AppRoutes />
+          </EventProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

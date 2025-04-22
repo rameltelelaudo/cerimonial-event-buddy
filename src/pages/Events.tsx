@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
@@ -13,18 +12,22 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useEventContext } from '@/contexts/EventContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, CalendarPlus, MapPin, Clock, Link as LinkIcon, Share2 } from 'lucide-react';
+import { Calendar, CalendarPlus, MapPin, Clock, Link as LinkIcon, Share2, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useAuth } from '@/contexts/AuthContext';
+import { Event } from '@/types/event';
 
 const Events = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { events, addEvent, setSelectedEvent } = useEventContext();
+  const { user } = useAuth();
+  const { events, addEvent, setSelectedEvent, loading } = useEventContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showSharePopover, setShowSharePopover] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Estado para o formulário de novo evento
   const [newEvent, setNewEvent] = useState({
@@ -45,7 +48,7 @@ const Events = () => {
     setNewEvent(prev => ({ ...prev, type: value }));
   };
   
-  const handleAddEvent = (e: React.FormEvent) => {
+  const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!newEvent.title || !newEvent.date || !newEvent.location) {
@@ -54,6 +57,8 @@ const Events = () => {
     }
     
     try {
+      setIsSubmitting(true);
+      
       // Combinar data e hora em um objeto Date
       const dateTimeString = `${newEvent.date}T${newEvent.time || '00:00'}`;
       const eventDate = new Date(dateTimeString);
@@ -62,37 +67,40 @@ const Events = () => {
         throw new Error("Data inválida");
       }
       
-      const event = {
-        id: uuidv4(),
+      const eventData: Omit<Event, 'id'> = {
         title: newEvent.title,
         date: eventDate,
         location: newEvent.location,
         description: newEvent.description,
         type: newEvent.type,
-        status: 'upcoming' as const
+        status: 'upcoming'
       };
       
-      addEvent(event);
+      const result = await addEvent(eventData);
       
-      toast.success("Evento adicionado com sucesso");
-      setIsDialogOpen(false);
-      
-      // Resetar o formulário
-      setNewEvent({
-        title: '',
-        date: '',
-        time: '',
-        location: '',
-        description: '',
-        type: 'Casamento'
-      });
+      if (result) {
+        toast.success("Evento adicionado com sucesso");
+        setIsDialogOpen(false);
+        
+        // Resetar o formulário
+        setNewEvent({
+          title: '',
+          date: '',
+          time: '',
+          location: '',
+          description: '',
+          type: 'Casamento'
+        });
+      }
     } catch (error) {
       toast.error("Erro ao adicionar evento. Verifique os dados informados.");
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
-  const handleSelectEvent = (event: any) => {
+  const handleSelectEvent = (event: Event) => {
     setSelectedEvent(event);
     // Navegar para página de detalhes do evento ou lista de convidados
     navigate('/guest-list');
@@ -242,14 +250,23 @@ const Events = () => {
                       variant="outline" 
                       type="button"
                       onClick={() => setIsDialogOpen(false)}
+                      disabled={isSubmitting}
                     >
                       Cancelar
                     </Button>
                     <Button 
                       type="submit" 
                       className="bg-leju-pink hover:bg-leju-pink/90"
+                      disabled={isSubmitting}
                     >
-                      Adicionar
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Adicionando...
+                        </>
+                      ) : (
+                        "Adicionar"
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -257,7 +274,12 @@ const Events = () => {
             </Dialog>
           </div>
           
-          {events.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-leju-pink" />
+              <span className="ml-2">Carregando eventos...</span>
+            </div>
+          ) : events.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {events.map((event) => (
                 <Card 
