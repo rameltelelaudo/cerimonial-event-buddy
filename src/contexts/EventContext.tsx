@@ -23,6 +23,15 @@ export const useEventContext = () => {
   return context;
 };
 
+// Função auxiliar para garantir que o status seja um dos valores permitidos
+const validateEventStatus = (status: string): 'upcoming' | 'ongoing' | 'completed' => {
+  if (status === 'upcoming' || status === 'ongoing' || status === 'completed') {
+    return status;
+  }
+  // Se o valor não for válido, retorna um valor padrão
+  return 'upcoming';
+};
+
 export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
@@ -57,7 +66,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           location: event.location,
           description: event.description || '',
           type: event.type || 'Casamento',
-          status: (event.status || 'upcoming') as 'upcoming' | 'ongoing' | 'completed',
+          status: validateEventStatus(event.status || 'upcoming'),
           coverImage: event.cover_image,
           user_id: event.user_id,
           created_at: event.created_at,
@@ -100,7 +109,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           location: eventData.location,
           description: eventData.description,
           type: eventData.type || 'Casamento',
-          status: eventData.status || 'upcoming',
+          status: validateEventStatus(eventData.status || 'upcoming'),
           cover_image: eventData.coverImage,
           user_id: user.id
         })
@@ -119,7 +128,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         location: data.location,
         description: data.description || '',
         type: data.type || 'Casamento',
-        status: data.status as 'upcoming' | 'ongoing' | 'completed',
+        status: validateEventStatus(data.status),
         coverImage: data.cover_image,
         user_id: data.user_id,
         created_at: data.created_at,
