@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { v4 as uuidv4 } from 'uuid';
 import { Task } from '@/types/task';
 import { toast } from 'sonner';
 import { useEventContext } from '@/contexts/EventContext';
@@ -14,6 +13,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddTaskFormProps {
   onAddTask: (task: Task) => void;
@@ -22,6 +23,7 @@ interface AddTaskFormProps {
 
 export const AddTaskForm = ({ onAddTask, onCancel }: AddTaskFormProps) => {
   const { events } = useEventContext();
+  const { user } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [formData, setFormData] = useState<Omit<Task, 'id' | 'dueDate'>>({
     title: '',
@@ -31,6 +33,7 @@ export const AddTaskForm = ({ onAddTask, onCancel }: AddTaskFormProps) => {
     eventId: events.length > 0 ? events[0].id : undefined,
     assignedTo: ''
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -41,22 +44,60 @@ export const AddTaskForm = ({ onAddTask, onCancel }: AddTaskFormProps) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title || !date) {
       toast.error('Preencha os campos obrigatórios');
       return;
     }
+
+    if (!user) {
+      toast.error('Você precisa estar logado para adicionar tarefas');
+      return;
+    }
     
-    const newTask: Task = {
-      id: uuidv4(),
-      ...formData,
-      dueDate: date
-    };
+    setLoading(true);
     
-    onAddTask(newTask);
-    toast.success('Tarefa adicionada com sucesso!');
+    try {
+      // Salvar no Supabase
+      const { data, error } = await supabase
+        .from('leju_tasks')
+        .insert({
+          title: formData.title,
+          description: formData.description || null,
+          due_date: date.toISOString(),
+          status: formData.status,
+          priority: formData.priority,
+          event_id: formData.eventId || null,
+          assigned_to: formData.assignedTo || null,
+          user_id: user.id
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Converter o formato do banco para o formato da aplicação
+      const newTask: Task = {
+        id: data.id,
+        title: data.title,
+        description: data.description || undefined,
+        dueDate: new Date(data.due_date),
+        status: data.status as 'pendente' | 'em_andamento' | 'concluida',
+        priority: data.priority as 'baixa' | 'media' | 'alta',
+        eventId: data.event_id || undefined,
+        assignedTo: data.assigned_to || undefined
+      };
+      
+      onAddTask(newTask);
+      toast.success('Tarefa adicionada com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao adicionar tarefa:', error);
+      toast.error(`Erro ao adicionar tarefa: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -181,8 +222,12 @@ export const AddTaskForm = ({ onAddTask, onCancel }: AddTaskFormProps) => {
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" className="bg-leju-pink hover:bg-leju-pink/90">
-          Adicionar Tarefa
+        <Button 
+          type="submit" 
+          className="bg-leju-pink hover:bg-leju-pink/90"
+          disabled={loading}
+        >
+          {loading ? 'Adicionando...' : 'Adicionar Tarefa'}
         </Button>
       </div>
     </form>

@@ -278,6 +278,147 @@ export type Database = {
           },
         ]
       }
+      leju_invitations: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          id: string
+          image_url: string | null
+          message: string
+          sent_count: number
+          template: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          image_url?: string | null
+          message: string
+          sent_count?: number
+          template: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          image_url?: string | null
+          message?: string
+          sent_count?: number
+          template?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leju_invitations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "leju_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leju_tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          due_date: string
+          event_id: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date: string
+          event_id?: string | null
+          id?: string
+          priority: string
+          status: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          event_id?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leju_tasks_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "leju_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leju_vendors: {
+        Row: {
+          category: string
+          contact_name: string
+          created_at: string
+          email: string | null
+          event_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          contact_name: string
+          created_at?: string
+          email?: string | null
+          event_id?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone: string
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          contact_name?: string
+          created_at?: string
+          email?: string | null
+          event_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leju_vendors_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "leju_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

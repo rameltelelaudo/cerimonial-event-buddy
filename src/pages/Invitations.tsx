@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
 import { Button } from '@/components/ui/button';
-import { Send, PlusCircle, Calendar, Share, Mail } from 'lucide-react';
+import { Send, PlusCircle, Calendar, Share, Mail, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -13,12 +13,57 @@ import { Invitation } from '@/types/invitation';
 import { useEventContext } from '@/contexts/EventContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Invitations = () => {
   const isMobile = useIsMobile();
   const { events } = useEventContext();
+  const { user } = useAuth();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  
+  // Carregar convites do Supabase
+  useEffect(() => {
+    const fetchInvitations = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('leju_invitations')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        if (data) {
+          const transformedInvitations: Invitation[] = data.map(invitation => ({
+            id: invitation.id,
+            title: invitation.title,
+            eventId: invitation.event_id || '',
+            template: invitation.template as 'standard' | 'elegant' | 'casual' | 'custom',
+            message: invitation.message,
+            imageUrl: invitation.image_url || undefined,
+            createdAt: new Date(invitation.created_at),
+            sentCount: invitation.sent_count
+          }));
+          
+          setInvitations(transformedInvitations);
+        }
+      } catch (error: any) {
+        console.error('Erro ao carregar convites:', error);
+        toast.error(`Erro ao carregar convites: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchInvitations();
+  }, [user]);
   
   const getEventTitle = (eventId: string) => {
     const event = events.find(e => e.id === eventId);
@@ -30,36 +75,63 @@ const Invitations = () => {
     setIsAddModalOpen(false);
   };
   
-  const handleSendInvitation = (id: string) => {
-    // Simular envio de convite
-    setInvitations(prevInvitations => 
-      prevInvitations.map(invitation => 
-        invitation.id === id 
-          ? { ...invitation, sentCount: invitation.sentCount + 5 }
-          : invitation
-      )
-    );
-    
-    toast.success('Convites enviados com sucesso!', {
-      description: '5 convites foram enviados para os convidados.'
-    });
+  const handleSendInvitation = async (id: string) => {
+    try {
+      // Atualizar o contador de envios no Supabase
+      const { data: invitationData } = await supabase
+        .from('leju_invitations')
+        .select('sent_count')
+        .eq('id', id)
+        .single();
+      
+      if (!invitationData) {
+        throw new Error('Convite não encontrado');
+      }
+      
+      const newCount = invitationData.sent_count + 5;
+      
+      const { error } = await supabase
+        .from('leju_invitations')
+        .update({ sent_count: newCount })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      setInvitations(prevInvitations => 
+        prevInvitations.map(invitation => 
+          invitation.id === id 
+            ? { ...invitation, sentCount: newCount }
+            : invitation
+        )
+      );
+      
+      toast.success('Convites enviados com sucesso!', {
+        description: '5 convites foram enviados para os convidados.'
+      });
+    } catch (error: any) {
+      console.error('Erro ao enviar convites:', error);
+      toast.error(`Erro ao enviar convites: ${error.message}`);
+    }
   };
   
   const handleShareInvitation = (id: string) => {
-    // Simular compartilhamento
     toast.success('Link gerado para compartilhamento!', {
       description: 'O link foi copiado para a área de transferência.'
     });
   };
   
   return (
-    <div className="flex min-h-screen flex-col bg-leju-background">
+    <div className="flex min-h-screen flex-col"
+         style={{ backgroundImage: "url('https://i.ibb.co/4gcB6kL/wedding-background.jpg')", 
+                  backgroundSize: "cover", 
+                  backgroundPosition: "center",
+                  backgroundAttachment: "fixed" }}>
       <Navbar />
       
       <div className="flex flex-1">
         {!isMobile && <Sidebar />}
         
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 backdrop-blur-sm bg-white/60">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
             <div>
               <h1 className="text-3xl font-bold">Convites</h1>
@@ -73,10 +145,15 @@ const Invitations = () => {
             </Button>
           </div>
           
-          {invitations.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center p-12">
+              <Loader2 className="h-8 w-8 animate-spin text-leju-pink" />
+              <span className="ml-2">Carregando convites...</span>
+            </div>
+          ) : invitations.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
               {invitations.map((invitation) => (
-                <Card key={invitation.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                <Card key={invitation.id} className="overflow-hidden hover:shadow-md transition-shadow glass">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg font-medium">{invitation.title}</CardTitle>
                     <p className="text-sm text-muted-foreground flex items-center mt-1">
@@ -117,7 +194,7 @@ const Invitations = () => {
               ))}
             </div>
           ) : (
-            <div className="border rounded-lg p-6 bg-white fade-in mt-4">
+            <div className="border rounded-lg p-6 bg-white/80 fade-in mt-4">
               <div className="text-center py-8">
                 <Send className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h2 className="text-xl font-semibold mb-4">Nenhum convite criado</h2>

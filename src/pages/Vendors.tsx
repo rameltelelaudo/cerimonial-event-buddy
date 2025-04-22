@@ -1,20 +1,66 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
 import { Button } from '@/components/ui/button';
-import { Briefcase, PlusCircle, Phone, Mail, Tag, X, Check } from 'lucide-react';
+import { Briefcase, PlusCircle, Phone, Mail, Tag, X, Check, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AddVendorForm } from '@/components/Vendors/AddVendorForm';
 import { Vendor } from '@/types/vendor';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const Vendors = () => {
   const isMobile = useIsMobile();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  
+  // Carregar fornecedores do Supabase
+  useEffect(() => {
+    const fetchVendors = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('leju_vendors')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        if (data) {
+          const transformedVendors: Vendor[] = data.map(vendor => ({
+            id: vendor.id,
+            name: vendor.name,
+            category: vendor.category,
+            contactName: vendor.contact_name,
+            phone: vendor.phone,
+            email: vendor.email || '',
+            status: vendor.status as 'confirmado' | 'pendente' | 'cancelado',
+            notes: vendor.notes || ''
+          }));
+          
+          setVendors(transformedVendors);
+        }
+      } catch (error: any) {
+        console.error('Erro ao carregar fornecedores:', error);
+        toast.error(`Erro ao carregar fornecedores: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchVendors();
+  }, [user]);
   
   const handleAddVendor = (vendor: Vendor) => {
     setVendors(prevVendors => [...prevVendors, vendor]);
@@ -33,13 +79,17 @@ const Vendors = () => {
   };
   
   return (
-    <div className="flex min-h-screen flex-col bg-leju-background">
+    <div className="flex min-h-screen flex-col"
+         style={{ backgroundImage: "url('https://i.ibb.co/4gcB6kL/wedding-background.jpg')", 
+                  backgroundSize: "cover", 
+                  backgroundPosition: "center",
+                  backgroundAttachment: "fixed" }}>
       <Navbar />
       
       <div className="flex flex-1">
         {!isMobile && <Sidebar />}
         
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 backdrop-blur-sm bg-white/60">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
             <div>
               <h1 className="text-3xl font-bold">Fornecedores</h1>
@@ -53,10 +103,15 @@ const Vendors = () => {
             </Button>
           </div>
           
-          {vendors.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center p-12">
+              <Loader2 className="h-8 w-8 animate-spin text-leju-pink" />
+              <span className="ml-2">Carregando fornecedores...</span>
+            </div>
+          ) : vendors.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
               {vendors.map((vendor) => (
-                <Card key={vendor.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                <Card key={vendor.id} className="overflow-hidden hover:shadow-md transition-shadow glass">
                   <div className="absolute top-0 left-0 w-1 h-full bg-leju-pink" />
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
@@ -92,7 +147,7 @@ const Vendors = () => {
               ))}
             </div>
           ) : (
-            <div className="border rounded-lg p-6 bg-white fade-in mt-4">
+            <div className="border rounded-lg p-6 bg-white/80 fade-in mt-4">
               <div className="text-center py-8">
                 <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h2 className="text-xl font-semibold mb-4">Nenhum fornecedor cadastrado</h2>

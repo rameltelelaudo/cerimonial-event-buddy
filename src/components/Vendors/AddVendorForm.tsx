@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Vendor } from '@/types/vendor';
-import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddVendorFormProps {
   onAddVendor: (vendor: Vendor) => void;
@@ -30,6 +31,7 @@ const vendorCategories = [
 ];
 
 export const AddVendorForm = ({ onAddVendor, onCancel }: AddVendorFormProps) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Omit<Vendor, 'id'>>({
     name: '',
     category: '',
@@ -39,6 +41,7 @@ export const AddVendorForm = ({ onAddVendor, onCancel }: AddVendorFormProps) => 
     status: 'pendente',
     notes: ''
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -49,21 +52,60 @@ export const AddVendorForm = ({ onAddVendor, onCancel }: AddVendorFormProps) => 
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.category || !formData.phone) {
       toast.error('Preencha os campos obrigatórios');
       return;
     }
+
+    if (!user) {
+      toast.error('Você precisa estar logado para adicionar fornecedores');
+      return;
+    }
     
-    const newVendor: Vendor = {
-      id: uuidv4(),
-      ...formData
-    };
+    setLoading(true);
     
-    onAddVendor(newVendor);
-    toast.success('Fornecedor adicionado com sucesso!');
+    try {
+      // Salvar no Supabase
+      const { data, error } = await supabase
+        .from('leju_vendors')
+        .insert({
+          name: formData.name,
+          category: formData.category,
+          contact_name: formData.contactName,
+          phone: formData.phone,
+          email: formData.email || null,
+          status: formData.status,
+          notes: formData.notes || null,
+          user_id: user.id
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Converter o formato do banco para o formato da aplicação
+      const newVendor: Vendor = {
+        id: data.id,
+        name: data.name,
+        category: data.category,
+        contactName: data.contact_name,
+        phone: data.phone,
+        email: data.email || '',
+        status: data.status as 'confirmado' | 'pendente' | 'cancelado',
+        notes: data.notes || ''
+      };
+      
+      onAddVendor(newVendor);
+      toast.success('Fornecedor adicionado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao adicionar fornecedor:', error);
+      toast.error(`Erro ao adicionar fornecedor: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -168,8 +210,12 @@ export const AddVendorForm = ({ onAddVendor, onCancel }: AddVendorFormProps) => 
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" className="bg-leju-pink hover:bg-leju-pink/90">
-          Adicionar Fornecedor
+        <Button 
+          type="submit" 
+          className="bg-leju-pink hover:bg-leju-pink/90"
+          disabled={loading}
+        >
+          {loading ? 'Adicionando...' : 'Adicionar Fornecedor'}
         </Button>
       </div>
     </form>

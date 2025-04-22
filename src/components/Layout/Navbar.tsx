@@ -30,7 +30,7 @@ export const Navbar = () => {
           <img 
             src="https://i.ibb.co/G40sCgqs/images.jpg" 
             alt="Leju App" 
-            className="h-8 w-auto"
+            className="h-8 w-auto rounded-md"
           />
           <span className="hidden font-bold sm:inline-block">
             Leju App

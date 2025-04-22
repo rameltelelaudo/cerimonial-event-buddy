@@ -1,22 +1,68 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckSquare, PlusCircle, Clock, Calendar, AlertTriangle } from 'lucide-react';
+import { CheckSquare, PlusCircle, Clock, Calendar, AlertTriangle, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AddTaskForm } from '@/components/Tasks/AddTaskForm';
 import { Task } from '@/types/task';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const Tasks = () => {
   const isMobile = useIsMobile();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  
+  // Carregar tarefas do Supabase
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('leju_tasks')
+          .select('*')
+          .order('due_date', { ascending: true });
+          
+        if (error) throw error;
+        
+        if (data) {
+          const transformedTasks: Task[] = data.map(task => ({
+            id: task.id,
+            title: task.title,
+            description: task.description || undefined,
+            dueDate: new Date(task.due_date),
+            status: task.status as 'pendente' | 'em_andamento' | 'concluida',
+            priority: task.priority as 'baixa' | 'media' | 'alta',
+            eventId: task.event_id || undefined,
+            assignedTo: task.assigned_to || undefined
+          }));
+          
+          setTasks(transformedTasks);
+        }
+      } catch (error: any) {
+        console.error('Erro ao carregar tarefas:', error);
+        toast.error(`Erro ao carregar tarefas: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTasks();
+  }, [user]);
   
   const handleAddTask = (task: Task) => {
     setTasks(prevTasks => [...prevTasks, task]);
@@ -53,13 +99,17 @@ const Tasks = () => {
   const completedTasksCount = tasks.filter(task => task.status === 'concluida').length;
   
   return (
-    <div className="flex min-h-screen flex-col bg-leju-background">
+    <div className="flex min-h-screen flex-col bg-leju-background"
+         style={{ backgroundImage: "url('https://i.ibb.co/4gcB6kL/wedding-background.jpg')", 
+                  backgroundSize: "cover", 
+                  backgroundPosition: "center",
+                  backgroundAttachment: "fixed" }}>
       <Navbar />
       
       <div className="flex flex-1">
         {!isMobile && <Sidebar />}
         
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 backdrop-blur-sm bg-white/60">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
             <div>
               <h1 className="text-3xl font-bold">Tarefas</h1>
@@ -73,21 +123,21 @@ const Tasks = () => {
             </Button>
           </div>
           
-          <Card className="mb-6">
+          <Card className="mb-6 glass">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-medium">Status</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="border rounded-lg p-4 text-center">
+                <div className="border rounded-lg p-4 text-center bg-white/80">
                   <h3 className="text-muted-foreground text-sm font-medium">Pendentes</h3>
                   <p className="text-3xl font-bold mt-1">{pendingTasksCount}</p>
                 </div>
-                <div className="border rounded-lg p-4 text-center">
+                <div className="border rounded-lg p-4 text-center bg-white/80">
                   <h3 className="text-muted-foreground text-sm font-medium">Em Andamento</h3>
                   <p className="text-3xl font-bold mt-1">{inProgressTasksCount}</p>
                 </div>
-                <div className="border rounded-lg p-4 text-center">
+                <div className="border rounded-lg p-4 text-center bg-white/80">
                   <h3 className="text-muted-foreground text-sm font-medium">Concluídas</h3>
                   <p className="text-3xl font-bold mt-1">{completedTasksCount}</p>
                 </div>
@@ -95,12 +145,17 @@ const Tasks = () => {
             </CardContent>
           </Card>
           
-          {tasks.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center p-12">
+              <Loader2 className="h-8 w-8 animate-spin text-leju-pink" />
+              <span className="ml-2">Carregando tarefas...</span>
+            </div>
+          ) : tasks.length > 0 ? (
             <div className="space-y-4">
               {tasks.map((task) => (
                 <Card 
                   key={task.id} 
-                  className={`hover:shadow-md transition-shadow ${getStatusClass(task.status)}`}
+                  className={`hover:shadow-md transition-shadow glass ${getStatusClass(task.status)}`}
                 >
                   <CardContent className="p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -152,7 +207,7 @@ const Tasks = () => {
               ))}
             </div>
           ) : (
-            <div className="border rounded-lg p-6 bg-white fade-in">
+            <div className="border rounded-lg p-6 bg-white/80 fade-in">
               <div className="text-center py-8">
                 <CheckSquare className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h2 className="text-xl font-semibold mb-4">Nenhuma tarefa cadastrada</h2>
