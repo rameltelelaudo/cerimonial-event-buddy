@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Layout/Navbar';
@@ -181,8 +180,8 @@ const EventFinances = () => {
           amount: Number(data.amount),
           date: new Date(data.date),
           category: data.category,
-          type: data.type,
-          status: data.status
+          type: data.type as 'income' | 'expense',
+          status: data.status as 'paid' | 'pending'
         };
         
         setFinances(prev => [newFinanceItem, ...prev]);
@@ -281,7 +280,6 @@ const EventFinances = () => {
     toast.success("Dados financeiros exportados com sucesso");
   };
   
-  // Filter items based on active tab
   const filteredItems = finances.filter(item => {
     if (activeTab === 'all') return true;
     if (activeTab === 'incomes') return item.type === 'income';
@@ -290,7 +288,6 @@ const EventFinances = () => {
     return true;
   });
   
-  // Calculate totals
   const totalIncomes = finances
     .filter(item => item.type === 'income')
     .reduce((sum, item) => sum + item.amount, 0);
@@ -495,7 +492,6 @@ const EventFinances = () => {
             </div>
           </div>
           
-          {/* Cartões de resumo financeiro */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
             <Card className={`border-l-4 ${balance >= 0 ? 'border-l-green-500' : 'border-l-red-500'}`}>
               <CardHeader className="py-4">
