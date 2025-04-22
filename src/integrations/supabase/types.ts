@@ -139,6 +139,145 @@ export type Database = {
           },
         ]
       }
+      leju_events: {
+        Row: {
+          cover_image: string | null
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          location: string
+          status: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cover_image?: string | null
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          location: string
+          status?: string
+          title: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cover_image?: string | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          location?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      leju_finances: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          event_id: string | null
+          id: string
+          status: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date: string
+          description: string
+          event_id?: string | null
+          id?: string
+          status: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          event_id?: string | null
+          id?: string
+          status?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leju_finances_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "leju_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leju_guests: {
+        Row: {
+          check_in_time: string | null
+          checked_in: boolean
+          companions: number
+          created_at: string
+          email: string | null
+          event_id: string | null
+          group_type: string
+          id: string
+          name: string
+          notes: string | null
+          user_id: string | null
+        }
+        Insert: {
+          check_in_time?: string | null
+          checked_in?: boolean
+          companions?: number
+          created_at?: string
+          email?: string | null
+          event_id?: string | null
+          group_type: string
+          id?: string
+          name: string
+          notes?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          check_in_time?: string | null
+          checked_in?: boolean
+          companions?: number
+          created_at?: string
+          email?: string | null
+          event_id?: string | null
+          group_type?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leju_guests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "leju_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

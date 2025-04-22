@@ -72,11 +72,14 @@ const Login = () => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" 
+         style={{ backgroundImage: "url('https://i.ibb.co/4gcB6kL/wedding-background.jpg')", 
+                  backgroundSize: "cover", 
+                  backgroundPosition: "center" }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img 
-            src="https://i.ibb.co/X212y5K/images.jpg" 
+            src="https://i.ibb.co/G40sCgqs/images.jpg" 
             alt="Leju App" 
             className="h-16 w-auto mx-auto"
           />
@@ -86,7 +89,7 @@ const Login = () => {
           </p>
         </div>
         
-        <Card>
+        <Card className="backdrop-blur-sm bg-white/90 shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Bem-vindo de volta</CardTitle>
             <CardDescription className="text-center">

@@ -8,42 +8,50 @@ const menuItems = [
   { 
     name: 'Dashboard', 
     path: '/', 
-    icon: LayoutDashboard 
+    icon: LayoutDashboard,
+    color: "text-indigo-500"
   },
   { 
     name: 'Eventos', 
     path: '/events', 
-    icon: Calendar 
+    icon: Calendar,
+    color: "text-pink-500" 
   },
   { 
     name: 'Lista de Convidados', 
     path: '/guest-list', 
-    icon: Users 
+    icon: Users,
+    color: "text-teal-500" 
   },
   { 
     name: 'Tarefas', 
     path: '/tasks', 
-    icon: CheckSquare 
+    icon: CheckSquare,
+    color: "text-amber-500" 
   },
   { 
     name: 'Checklist', 
     path: '/checklist', 
-    icon: ListChecks 
+    icon: ListChecks,
+    color: "text-green-500" 
   },
   { 
     name: 'Fornecedores', 
     path: '/vendors', 
-    icon: Briefcase 
+    icon: Briefcase,
+    color: "text-purple-500" 
   },
   { 
     name: 'Convites', 
     path: '/invitations', 
-    icon: Send 
+    icon: Send,
+    color: "text-sky-500" 
   },
   { 
     name: 'Ajuda', 
     path: '/help', 
-    icon: HelpCircle 
+    icon: HelpCircle,
+    color: "text-rose-500" 
   }
 ];
 
@@ -51,10 +59,17 @@ export const Sidebar = () => {
   const location = useLocation();
   
   return (
-    <aside className="flex flex-col h-full w-64 bg-sidebar p-4 border-r">
-      <div className="mb-6 mt-2">
-        <h2 className="text-xl font-bold text-leju-pink">Leju App</h2>
-        <p className="text-sm text-muted-foreground">Gestão de Eventos</p>
+    <aside className="flex flex-col h-full w-64 bg-sidebar p-4 border-r bg-white/80 backdrop-blur-sm">
+      <div className="mb-6 mt-2 flex items-center">
+        <img 
+          src="https://i.ibb.co/G40sCgqs/images.jpg" 
+          alt="Leju App" 
+          className="h-8 w-auto mr-2"
+        />
+        <div>
+          <h2 className="text-xl font-bold text-leju-pink">Leju App</h2>
+          <p className="text-sm text-muted-foreground">Gestão de Eventos</p>
+        </div>
       </div>
       
       <nav className="space-y-1 flex-1">
@@ -71,7 +86,7 @@ export const Sidebar = () => {
                   : "hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground"
               )}
             >
-              <item.icon className={cn("h-5 w-5 mr-3", isActive ? "text-leju-pink" : "text-muted-foreground")} />
+              <item.icon className={cn("h-5 w-5 mr-3", isActive ? "text-leju-pink" : item.color)} />
               {item.name}
             </Link>
           );

@@ -41,7 +41,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('events')
+          .from('leju_events')
           .select('*')
           .order('date', { ascending: false });
 
@@ -56,8 +56,9 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           date: new Date(event.date),
           location: event.location,
           description: event.description || '',
-          type: 'Casamento', // Default type since it's not in the database yet
-          status: 'upcoming' as const, // Default status since it's not in the database yet
+          type: event.type || 'Casamento',
+          status: event.status || 'upcoming',
+          coverImage: event.cover_image,
           user_id: event.user_id,
           created_at: event.created_at,
           updated_at: event.updated_at
@@ -81,7 +82,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     fetchEvents();
-  }, [user]);
+  }, [user, selectedEvent]);
 
   // Function to add a new event
   const addEvent = async (eventData: Omit<Event, 'id'>): Promise<Event | null> => {
@@ -92,12 +93,15 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     try {
       const { data, error } = await supabase
-        .from('events')
+        .from('leju_events')
         .insert({
           title: eventData.title,
           date: eventData.date.toISOString(),
           location: eventData.location,
           description: eventData.description,
+          type: eventData.type || 'Casamento',
+          status: eventData.status || 'upcoming',
+          cover_image: eventData.coverImage,
           user_id: user.id
         })
         .select()
@@ -114,8 +118,9 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         date: new Date(data.date),
         location: data.location,
         description: data.description || '',
-        type: 'Casamento', // Default type since it's not in the database yet
-        status: 'upcoming' as const, // Default status since it's not in the database yet
+        type: data.type || 'Casamento',
+        status: data.status || 'upcoming',
+        coverImage: data.cover_image,
         user_id: data.user_id,
         created_at: data.created_at,
         updated_at: data.updated_at

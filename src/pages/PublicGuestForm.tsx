@@ -45,7 +45,7 @@ const PublicGuestForm = () => {
       
       try {
         const { data, error } = await supabase
-          .from('events')
+          .from('leju_events')
           .select('*')
           .eq('id', eventId)
           .single();
@@ -98,7 +98,7 @@ const PublicGuestForm = () => {
     try {
       // Salvar convidado no Supabase
       const { data, error } = await supabase
-        .from('guests')
+        .from('leju_guests')
         .insert({
           event_id: eventId,
           name: guest.name.trim(),
@@ -164,13 +164,16 @@ const PublicGuestForm = () => {
   }
   
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
+    <div className="min-h-screen bg-slate-50 py-12 px-4" 
+        style={{ backgroundImage: "url('https://i.ibb.co/4gcB6kL/wedding-background.jpg')", 
+                 backgroundSize: "cover", 
+                 backgroundPosition: "center" }}>
       <div className="max-w-md mx-auto">
-        <Card>
+        <Card className="backdrop-blur-sm bg-white/90 shadow-lg">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4">
               <img 
-                src="https://i.ibb.co/X212y5K/images.jpg" 
+                src="https://i.ibb.co/G40sCgqs/images.jpg" 
                 alt="Leju App" 
                 className="h-12 w-auto mx-auto"
               />

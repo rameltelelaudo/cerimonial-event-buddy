@@ -12,7 +12,7 @@ export const Navbar = () => {
   const isMobile = useIsMobile();
   
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background">
+    <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm">
       <div className="flex h-16 items-center px-4 sm:px-6">
         <Sheet>
           <SheetTrigger asChild className="lg:hidden">
@@ -28,7 +28,7 @@ export const Navbar = () => {
         
         <Link to="/" className="flex items-center gap-2">
           <img 
-            src="https://i.ibb.co/X212y5K/images.jpg" 
+            src="https://i.ibb.co/G40sCgqs/images.jpg" 
             alt="Leju App" 
             className="h-8 w-auto"
           />

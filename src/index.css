@@ -99,6 +99,10 @@
 
   body {
     @apply bg-leju-background text-foreground;
+    background-image: url('https://i.ibb.co/4gcB6kL/wedding-background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
   }
 }
 
@@ -119,4 +123,9 @@
 
 .checked-in {
   @apply bg-green-50 text-green-800;
+}
+
+/* Glass effect for cards and containers */
+.glass {
+  @apply backdrop-blur-sm bg-white/80 border border-white/20;
 }

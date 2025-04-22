@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useEventContext } from '@/contexts/EventContext';
 import { Guest, GuestGroup } from '@/types/guest';
+import { supabase } from '@/integrations/supabase/client';
 
 const guestGroups: GuestGroup[] = [
   "Família",
@@ -41,28 +42,11 @@ const GuestList = () => {
     status: 'Todos'
   });
   
-  // Inicializar a lista de convidados do localStorage
-  const [guests, setGuests] = useState<Guest[]>(() => {
-    if (!selectedEvent) return [];
-    
-    const savedGuests = localStorage.getItem(`guests_${selectedEvent.id}`);
-    if (savedGuests) {
-      try {
-        const parsedGuests = JSON.parse(savedGuests);
-        // Converter strings de data para objetos Date se necessário
-        return parsedGuests.map((guest: any) => ({
-          ...guest,
-          checkInTime: guest.checkInTime ? new Date(guest.checkInTime) : undefined
-        }));
-      } catch (error) {
-        console.error('Erro ao carregar convidados:', error);
-        return [];
-      }
-    }
-    return [];
-  });
+  // Initialize the guest list
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Estado para dialog de adicionar convidado
+  // State for adding guest dialog
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
   const [newGuest, setNewGuest] = useState({
     name: '',
@@ -72,7 +56,7 @@ const GuestList = () => {
     notes: ''
   });
   
-  // Redirecionamento se não houver evento selecionado
+  // Redirect if no event is selected
   useEffect(() => {
     if (!selectedEvent) {
       toast.info("Selecione um evento primeiro");
@@ -80,14 +64,51 @@ const GuestList = () => {
     }
   }, [selectedEvent, navigate]);
   
-  // Salvar convidados no localStorage quando mudar
+  // Fetch guests from Supabase when event is selected
   useEffect(() => {
-    if (selectedEvent && guests.length > 0) {
-      localStorage.setItem(`guests_${selectedEvent.id}`, JSON.stringify(guests));
-    }
-  }, [guests, selectedEvent]);
+    const fetchGuests = async () => {
+      if (!selectedEvent) return;
+      
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from('leju_guests')
+          .select('*')
+          .eq('event_id', selectedEvent.id)
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          // Transform data to match Guest type
+          const transformedGuests: Guest[] = data.map(g => ({
+            id: g.id,
+            name: g.name,
+            email: g.email || undefined,
+            group: g.group_type as GuestGroup,
+            companions: g.companions,
+            notes: g.notes || undefined,
+            checkedIn: g.checked_in,
+            checkInTime: g.check_in_time ? new Date(g.check_in_time) : undefined
+          }));
+          
+          setGuests(transformedGuests);
+        }
+      } catch (error: any) {
+        console.error('Error fetching guests:', error);
+        toast.error('Erro ao carregar convidados: ' + error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchGuests();
+  }, [selectedEvent]);
   
-  const handleAddGuest = (e: React.FormEvent) => {
+  const handleAddGuest = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedEvent) {
@@ -100,38 +121,83 @@ const GuestList = () => {
       return;
     }
     
-    const guest: Guest = {
-      id: uuidv4(),
-      name: newGuest.name.trim(),
-      email: newGuest.email.trim() || undefined,
-      group: newGuest.group,
-      companions: newGuest.companions,
-      notes: newGuest.notes.trim() || undefined,
-      checkedIn: false
-    };
-    
-    setGuests([...guests, guest]);
-    toast.success('Convidado adicionado com sucesso');
-    
-    // Resetar form
-    setNewGuest({
-      name: '',
-      email: '',
-      group: 'Família',
-      companions: 0,
-      notes: ''
-    });
-    
-    setIsAddGuestOpen(false);
+    try {
+      const { data, error } = await supabase
+        .from('leju_guests')
+        .insert({
+          event_id: selectedEvent.id,
+          name: newGuest.name.trim(),
+          email: newGuest.email.trim() || null,
+          group_type: newGuest.group,
+          companions: newGuest.companions,
+          notes: newGuest.notes.trim() || null,
+          checked_in: false,
+          user_id: selectedEvent.user_id
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Add new guest to state
+      const guest: Guest = {
+        id: data.id,
+        name: data.name,
+        email: data.email || undefined,
+        group: data.group_type as GuestGroup,
+        companions: data.companions,
+        notes: data.notes || undefined,
+        checkedIn: false
+      };
+      
+      setGuests([guest, ...guests]);
+      toast.success('Convidado adicionado com sucesso');
+      
+      // Reset form
+      setNewGuest({
+        name: '',
+        email: '',
+        group: 'Família',
+        companions: 0,
+        notes: ''
+      });
+      
+      setIsAddGuestOpen(false);
+    } catch (error: any) {
+      console.error('Error adding guest:', error);
+      toast.error('Erro ao adicionar convidado: ' + error.message);
+    }
   };
   
-  const handleCheckIn = (id: string) => {
-    setGuests(guests.map(guest => 
-      guest.id === id 
-        ? { ...guest, checkedIn: true, checkInTime: new Date() } 
-        : guest
-    ));
-    toast.success('Check-in confirmado');
+  const handleCheckIn = async (id: string) => {
+    try {
+      const checkInTime = new Date();
+      
+      const { error } = await supabase
+        .from('leju_guests')
+        .update({ 
+          checked_in: true, 
+          check_in_time: checkInTime.toISOString() 
+        })
+        .eq('id', id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      setGuests(guests.map(guest => 
+        guest.id === id 
+          ? { ...guest, checkedIn: true, checkInTime } 
+          : guest
+      ));
+      
+      toast.success('Check-in confirmado');
+    } catch (error: any) {
+      console.error('Error during check-in:', error);
+      toast.error('Erro ao confirmar check-in: ' + error.message);
+    }
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -177,19 +243,19 @@ const GuestList = () => {
     toast.success('Lista exportada com sucesso');
   };
   
-  // Filtrar convidados com base nos filtros
+  // Filter guests with search and filter options
   const filteredGuests = guests.filter(guest => {
-    // Filtrar por termo de busca
+    // Filter by search term
     if (filters.search && !guest.name.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }
     
-    // Filtrar por grupo
+    // Filter by group
     if (filters.group !== 'Todos' && guest.group !== filters.group) {
       return false;
     }
     
-    // Filtrar por status
+    // Filter by status
     if (filters.status === 'Confirmados' && !guest.checkedIn) {
       return false;
     }
@@ -205,13 +271,16 @@ const GuestList = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col" 
+         style={{ backgroundImage: "url('https://i.ibb.co/4gcB6kL/wedding-background.jpg')", 
+                  backgroundSize: "cover", 
+                  backgroundPosition: "center" }}>
       <Navbar />
       
       <div className="flex flex-1">
         {!isMobile && <Sidebar />}
         
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 backdrop-blur-sm bg-white/60">
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-2">
               <Button
@@ -339,7 +408,7 @@ const GuestList = () => {
           
           {/* Estatísticas de convidados */}
           <div className="grid gap-4 sm:grid-cols-3 mb-6">
-            <Card>
+            <Card className="bg-white/80">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total de Convidados</CardTitle>
                 <div className="text-2xl font-bold">
@@ -347,7 +416,7 @@ const GuestList = () => {
                 </div>
               </CardHeader>
             </Card>
-            <Card>
+            <Card className="bg-white/80">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Confirmados</CardTitle>
                 <div className="text-2xl font-bold">
@@ -355,7 +424,7 @@ const GuestList = () => {
                 </div>
               </CardHeader>
             </Card>
-            <Card>
+            <Card className="bg-white/80">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Acompanhantes</CardTitle>
                 <div className="text-2xl font-bold">
@@ -371,7 +440,7 @@ const GuestList = () => {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar convidados..."
-                  className="pl-8"
+                  className="pl-8 bg-white/80"
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 />
@@ -430,7 +499,7 @@ const GuestList = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-9" 
+                  className="h-9 bg-white/80" 
                   onClick={exportToCSV}
                   disabled={filteredGuests.length === 0}
                 >
@@ -441,7 +510,7 @@ const GuestList = () => {
             </div>
             
             {guests.length === 0 ? (
-              <div className="rounded-md border p-8 text-center">
+              <div className="rounded-md border p-8 text-center bg-white/80">
                 <h3 className="text-lg font-medium mb-2">Nenhum convidado cadastrado</h3>
                 <p className="text-muted-foreground mb-4">
                   Adicione convidados para este evento
@@ -455,7 +524,7 @@ const GuestList = () => {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-md border">
+              <div className="rounded-md border bg-white/80">
                 <Table>
                   <TableHeader>
                     <TableRow>
