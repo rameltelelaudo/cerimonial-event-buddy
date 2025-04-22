@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Layout/Navbar';
@@ -142,37 +141,29 @@ const EventFinances = () => {
     setNewItem(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleAddFinanceItem = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newItem.description || !newItem.amount || !newItem.category) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-    
-    const amount = parseFloat(newItem.amount);
-    if (isNaN(amount) || amount <= 0) {
-      toast.error("Valor inválido");
+    if (!eventId || !newItem.description || !newItem.amount || !newItem.category || !newItem.date) {
+      toast.error('Por favor, preencha todos os campos obrigatórios');
       return;
     }
     
     setSubmitting(true);
     
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('finances')
         .insert({
           event_id: eventId,
           description: newItem.description,
-          amount: amount,
-          date: new Date(newItem.date).toISOString(),
+          amount: parseFloat(newItem.amount),
+          date: newItem.date.toISOString(),
           category: newItem.category,
-          type: newItem.type,
-          status: newItem.status,
+          type: newItem.type as 'income' | 'expense',
+          status: newItem.status as 'paid' | 'pending',
           user_id: event.user_id
-        })
-        .select()
-        .single();
+        });
         
       if (error) {
         throw error;
@@ -368,7 +359,7 @@ const EventFinances = () => {
                       <DialogTitle>Adicionar Item Financeiro</DialogTitle>
                     </DialogHeader>
                     
-                    <form onSubmit={handleAddFinanceItem} className="space-y-4 pt-4">
+                    <form onSubmit={handleSubmit} className="space-y-4 pt-4">
                       <div className="space-y-2">
                         <Label htmlFor="type">Tipo</Label>
                         <Select

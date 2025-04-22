@@ -56,8 +56,8 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           date: new Date(event.date),
           location: event.location,
           description: event.description || '',
-          type: event.type || 'Casamento',
-          status: event.status || 'upcoming'
+          type: event.type || 'Casamento',  // Add default type if not in database
+          status: event.status || 'upcoming'  // Add default status if not in database
         }));
 
         setEvents(transformedEvents);
@@ -95,8 +95,8 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           date: eventData.date.toISOString(),
           location: eventData.location,
           description: eventData.description,
-          type: eventData.type,
-          status: eventData.status,
+          type: eventData.type || 'Casamento',  // Add default type
+          status: eventData.status || 'upcoming',  // Add default status
           user_id: user.id
         })
         .select()
