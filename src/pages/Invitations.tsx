@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
@@ -24,7 +23,6 @@ const Invitations = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   
-  // Carregar convites do Supabase
   useEffect(() => {
     const fetchInvitations = async () => {
       if (!user) {
@@ -77,7 +75,6 @@ const Invitations = () => {
   
   const handleSendInvitation = async (id: string) => {
     try {
-      // Atualizar o contador de envios no Supabase
       const { data: invitationData } = await supabase
         .from('leju_invitations')
         .select('sent_count')
@@ -121,17 +118,13 @@ const Invitations = () => {
   };
   
   return (
-    <div className="flex min-h-screen flex-col"
-         style={{ backgroundImage: "url('https://i.ibb.co/4gcB6kL/wedding-background.jpg')", 
-                  backgroundSize: "cover", 
-                  backgroundPosition: "center",
-                  backgroundAttachment: "fixed" }}>
+    <div className="flex min-h-screen flex-col">
       <Navbar />
       
       <div className="flex flex-1">
         {!isMobile && <Sidebar />}
         
-        <main className="flex-1 p-6 backdrop-blur-sm bg-white/60">
+        <main className="flex-1 p-6 backdrop-blur-sm">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
             <div>
               <h1 className="text-3xl font-bold">Convites</h1>

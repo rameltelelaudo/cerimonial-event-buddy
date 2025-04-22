@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -107,7 +106,6 @@ const Checklist = () => {
   const navigate = useNavigate();
   const { selectedEvent } = useEventContext();
   
-  // Usar useState com callback para inicializar guests do localStorage
   const [guests, setGuests] = useState(() => {
     if (!selectedEvent) return [];
     
@@ -123,7 +121,6 @@ const Checklist = () => {
     return [];
   });
   
-  // Redirecionamento se não houver evento selecionado
   useEffect(() => {
     if (!selectedEvent) {
       toast.info("Selecione um evento primeiro");
@@ -143,7 +140,6 @@ const Checklist = () => {
     toast.success("Check-in realizado com sucesso!");
   };
   
-  // Salvar guests no localStorage quando mudar
   useEffect(() => {
     if (selectedEvent && guests.length > 0) {
       localStorage.setItem(`guests_${selectedEvent.id}`, JSON.stringify(guests));
@@ -176,15 +172,15 @@ const Checklist = () => {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-2xl sm:text-3xl font-bold">{selectedEvent.title}</h1>
+              <h1 className="text-xl sm:text-3xl font-bold">{selectedEvent.title}</h1>
             </div>
-            <div className="text-muted-foreground mb-4">
+            <div className="text-sm sm:text-base text-muted-foreground mb-4">
               {format(new Date(selectedEvent.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
               {' • '}
               {selectedEvent.location}
             </div>
-            <h2 className="text-xl font-semibold mb-2">Checklist de Convidados</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-lg sm:text-xl font-semibold mb-2">Checklist de Convidados</h2>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Realize o check-in dos convidados no dia do evento
             </p>
           </div>
@@ -201,7 +197,7 @@ const Checklist = () => {
             </div>
           </div>
           
-          <div className="rounded-lg border bg-card">
+          <div className="rounded-lg border bg-card shadow-sm">
             {guests.length === 0 ? (
               <div className="p-8 text-center">
                 <h3 className="text-lg font-medium mb-2">Nenhum convidado cadastrado</h3>
@@ -227,16 +223,18 @@ const Checklist = () => {
                 {filteredGuests.length === 0 ? (
                   <p className="text-center py-4 text-muted-foreground">Nenhum convidado encontrado</p>
                 ) : (
-                  filteredGuests.map(guest => (
-                    <GuestItem 
-                      key={guest.id}
-                      id={guest.id}
-                      name={guest.name}
-                      companions={guest.companions}
-                      checkedIn={guest.checkedIn}
-                      onCheckIn={handleCheckIn}
-                    />
-                  ))
+                  <div className="space-y-3">
+                    {filteredGuests.map(guest => (
+                      <GuestItem 
+                        key={guest.id}
+                        id={guest.id}
+                        name={guest.name}
+                        companions={guest.companions}
+                        checkedIn={guest.checkedIn}
+                        onCheckIn={handleCheckIn}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             ) : (

@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Calendar, CheckSquare, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEventContext } from '@/contexts/EventContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardCardProps {
   title: string;
@@ -32,19 +34,62 @@ const DashboardCard = ({ title, value, description, icon, linkTo, bgClass }: Das
 
 export const DashboardCards = () => {
   const { events } = useEventContext();
-  
-  // Calcular dados reais para os cards
-  const guestCount = 0; // Será atualizado quando tivermos uma lista real de convidados
-  const confirmedGuests = 0; // Será atualizado quando tivermos uma lista real de convidados confirmados
+  const { user } = useAuth();
+  const [guestCount, setGuestCount] = useState(0);
+  const [confirmedGuests, setConfirmedGuests] = useState(0);
+  const [taskCount, setTaskCount] = useState(0);
+  const [pendingTasks, setPendingTasks] = useState(0);
+  const [vendorCount, setVendorCount] = useState(0);
+  const [confirmedVendors, setConfirmedVendors] = useState(0);
   
   const eventCount = events.length;
   const nextEventDays = events.length > 0 ? "em breve" : "nenhum agendado";
   
-  const taskCount = 0; // Será atualizado quando tivermos tarefas reais
-  const pendingTasks = 0; // Será atualizado quando tivermos tarefas pendentes reais
-  
-  const vendorCount = 0; // Será atualizado quando tivermos fornecedores reais
-  const confirmedVendors = 0; // Será atualizado quando tivermos fornecedores confirmados reais
+  // Buscar contagem de convidados, tarefas e fornecedores
+  useEffect(() => {
+    const fetchCounts = async () => {
+      if (!user) return;
+      
+      try {
+        // Buscar contagem de convidados
+        const { data: guestsData, error: guestsError } = await supabase
+          .from('leju_guests')
+          .select('id, checked_in')
+          .eq('user_id', user.id);
+          
+        if (!guestsError && guestsData) {
+          setGuestCount(guestsData.length);
+          setConfirmedGuests(guestsData.filter(g => g.checked_in).length);
+        }
+        
+        // Buscar contagem de tarefas
+        const { data: tasksData, error: tasksError } = await supabase
+          .from('leju_tasks')
+          .select('id, status')
+          .eq('user_id', user.id);
+          
+        if (!tasksError && tasksData) {
+          setTaskCount(tasksData.length);
+          setPendingTasks(tasksData.filter(t => t.status !== 'concluida').length);
+        }
+        
+        // Buscar contagem de fornecedores
+        const { data: vendorsData, error: vendorsError } = await supabase
+          .from('leju_vendors')
+          .select('id, status')
+          .eq('user_id', user.id);
+          
+        if (!vendorsError && vendorsData) {
+          setVendorCount(vendorsData.length);
+          setConfirmedVendors(vendorsData.filter(v => v.status === 'confirmado').length);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar contagens:', error);
+      }
+    };
+    
+    fetchCounts();
+  }, [user]);
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
