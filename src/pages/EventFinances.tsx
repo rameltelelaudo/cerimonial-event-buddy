@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Layout/Navbar';
@@ -152,35 +153,40 @@ const EventFinances = () => {
     setSubmitting(true);
     
     try {
-      const { error } = await supabase
+      // First, insert the finance item and return the inserted row
+      const { data, error } = await supabase
         .from('finances')
         .insert({
           event_id: eventId,
           description: newItem.description,
           amount: parseFloat(newItem.amount),
-          date: newItem.date.toISOString(),
+          date: new Date(newItem.date).toISOString(), // Convert string date to Date object first
           category: newItem.category,
           type: newItem.type as 'income' | 'expense',
           status: newItem.status as 'paid' | 'pending',
           user_id: event.user_id
-        });
+        })
+        .select()
+        .single();
         
       if (error) {
         throw error;
       }
       
-      // Add new item to state
-      const newFinanceItem: FinanceItem = {
-        id: data.id,
-        description: data.description,
-        amount: Number(data.amount),
-        date: new Date(data.date),
-        category: data.category,
-        type: data.type,
-        status: data.status
-      };
-      
-      setFinances(prev => [newFinanceItem, ...prev]);
+      // Add new item to state if we have data
+      if (data) {
+        const newFinanceItem: FinanceItem = {
+          id: data.id,
+          description: data.description,
+          amount: Number(data.amount),
+          date: new Date(data.date),
+          category: data.category,
+          type: data.type,
+          status: data.status
+        };
+        
+        setFinances(prev => [newFinanceItem, ...prev]);
+      }
       
       // Reset form
       setNewItem({

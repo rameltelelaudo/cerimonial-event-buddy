@@ -56,8 +56,11 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           date: new Date(event.date),
           location: event.location,
           description: event.description || '',
-          type: event.type || 'Casamento',  // Add default type if not in database
-          status: event.status || 'upcoming'  // Add default status if not in database
+          type: 'Casamento', // Default type since it's not in the database yet
+          status: 'upcoming' as const, // Default status since it's not in the database yet
+          user_id: event.user_id,
+          created_at: event.created_at,
+          updated_at: event.updated_at
         }));
 
         setEvents(transformedEvents);
@@ -95,8 +98,6 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           date: eventData.date.toISOString(),
           location: eventData.location,
           description: eventData.description,
-          type: eventData.type || 'Casamento',  // Add default type
-          status: eventData.status || 'upcoming',  // Add default status
           user_id: user.id
         })
         .select()
@@ -113,8 +114,11 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         date: new Date(data.date),
         location: data.location,
         description: data.description || '',
-        type: data.type || 'Casamento',
-        status: data.status || 'upcoming'
+        type: 'Casamento', // Default type since it's not in the database yet
+        status: 'upcoming' as const, // Default status since it's not in the database yet
+        user_id: data.user_id,
+        created_at: data.created_at,
+        updated_at: data.updated_at
       };
 
       // Update local state
