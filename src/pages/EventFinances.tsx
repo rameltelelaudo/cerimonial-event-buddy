@@ -51,13 +51,12 @@ const EventFinances = () => {
     setIsEditModalOpen(true);
   };
 
-  // Adaptando os handlers para distribuição correta com base nos tipos
-  // handleInputChange suporta Input, TextArea e Select (versão estendida)
-  const onInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  // Wrapper para aceitar só Input e TextArea no onInputChange:
+  const onInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     handleInputChange(e);
   };
 
-  // handleSelectChange continua como function (name:string, value:string)
+  // onSelectChange (nome, valor)
   const onSelectChange = (name: string, value: string) => {
     handleSelectChange(name, value);
   };
