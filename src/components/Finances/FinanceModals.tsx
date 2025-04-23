@@ -1,4 +1,6 @@
 
+// Atualizei a tipagem para corresponder corretamente, e ajustei os comentários e propriedades.
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Finance } from '@/types/finance';

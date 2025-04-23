@@ -138,4 +138,3 @@ const EventFinances = () => {
 };
 
 export default EventFinances;
-

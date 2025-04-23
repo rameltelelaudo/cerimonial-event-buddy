@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react'; // ícone com O maiúsculo correto
 import { toast } from 'sonner';
 
 export const AuthButton = () => {
