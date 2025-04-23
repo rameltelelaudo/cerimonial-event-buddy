@@ -105,7 +105,11 @@ const EventFinances = () => {
               </p>
             </div>
           </div>
+          
+          {/* Header com botão add */}
           <FinanceHeader title="Detalhes Financeiros" onAddClick={() => setIsAddModalOpen(true)} />
+          
+          {/* Lista com edit e delete */}
           <FinanceList
             finances={finances}
             isLoading={isLoading}
@@ -113,6 +117,8 @@ const EventFinances = () => {
             onDelete={handleDeleteFinance}
             onAddNew={() => setIsAddModalOpen(true)}
           />
+          
+          {/* Modais add/edit */}
           <FinanceModals
             isAddModalOpen={isAddModalOpen}
             setIsAddModalOpen={setIsAddModalOpen}
@@ -137,3 +143,4 @@ const EventFinances = () => {
 };
 
 export default EventFinances;
+
