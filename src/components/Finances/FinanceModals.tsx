@@ -20,7 +20,9 @@ interface FinanceModalsProps {
     status: string;
     date: string;
   };
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  // Corrigido: onInputChange aceita Input, TextArea ou Select via HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  // onSelectChange recebe nome e valor
   onSelectChange: (name: string, value: string) => void;
   onAddSubmit: (e: React.FormEvent) => void;
   onUpdateSubmit: (e: React.FormEvent) => void;
@@ -76,3 +78,4 @@ export const FinanceModals: React.FC<FinanceModalsProps> = ({
     </>
   );
 };
+

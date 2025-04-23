@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
@@ -22,7 +22,7 @@ const EventFinances = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedFinance, setSelectedFinance] = useState<Finance | null>(null);
-  
+
   const {
     finances,
     isLoading,
@@ -37,7 +37,7 @@ const EventFinances = () => {
     handleUpdateFinance,
     handleDeleteFinance
   } = useFinances(eventId);
-  
+
   const handleEditFinance = (finance: Finance) => {
     setSelectedFinance(finance);
     setNewFinance({
@@ -50,7 +50,18 @@ const EventFinances = () => {
     });
     setIsEditModalOpen(true);
   };
-  
+
+  // Adaptando os handlers para distribuição correta com base nos tipos
+  // handleInputChange suporta Input, TextArea e Select (versão estendida)
+  const onInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    handleInputChange(e);
+  };
+
+  // handleSelectChange continua como function (name:string, value:string)
+  const onSelectChange = (name: string, value: string) => {
+    handleSelectChange(name, value);
+  };
+
   const handleAddFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await handleAddFinance();
@@ -58,22 +69,22 @@ const EventFinances = () => {
       setIsAddModalOpen(false);
     }
   };
-  
+
   const handleUpdateFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFinance) return;
-    
+
     const success = await handleUpdateFinance(selectedFinance.id);
     if (success) {
       setIsEditModalOpen(false);
       setSelectedFinance(null);
     }
   };
-  
+
   if (!selectedEvent) {
     return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
   }
-  
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -111,8 +122,8 @@ const EventFinances = () => {
             setIsEditModalOpen={setIsEditModalOpen}
             selectedFinance={selectedFinance}
             newFinance={newFinance}
-            onInputChange={handleInputChange}
-            onSelectChange={handleSelectChange}
+            onInputChange={onInputChange}
+            onSelectChange={onSelectChange}
             onAddSubmit={handleAddFormSubmit}
             onUpdateSubmit={handleUpdateFormSubmit}
             onCancel={() => {
@@ -128,3 +139,4 @@ const EventFinances = () => {
 };
 
 export default EventFinances;
+
