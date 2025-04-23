@@ -4,16 +4,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
-import { Button } from '@/components/ui/button';
-import { PlusCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Finance } from '@/types/finance';
-import { FinanceSummaryCards } from '@/components/Finances/FinanceSummaryCards';
-import { FinanceTable } from '@/components/Finances/FinanceTable';
-import { EmptyFinanceState } from '@/components/Finances/EmptyFinanceState';
-import { FinanceForm } from '@/components/Finances/FinanceForm';
 import { useFinances } from '@/hooks/useFinances';
+import { Button } from '@/components/ui/button';
+
+import { FinanceHeader } from '@/components/Finances/FinanceHeader';
+import { FinanceList } from '@/components/Finances/FinanceList';
+import { FinanceModals } from '@/components/Finances/FinanceModals';
 
 const EventFinances = () => {
   const isMobile = useIsMobile();
@@ -78,10 +77,8 @@ const EventFinances = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      
       <div className="flex flex-1">
         {!isMobile && <Sidebar />}
-        
         <main className="flex-1 p-6">
           <div className="flex items-center gap-2 mb-4">
             <Button
@@ -99,73 +96,31 @@ const EventFinances = () => {
               </p>
             </div>
           </div>
-          
-          <FinanceSummaryCards 
-            totalReceitas={totalReceitas}
-            totalDespesas={totalDespesas}
-            saldoTotal={saldoTotal}
+          <FinanceHeader title="Detalhes Financeiros" onAddClick={() => setIsAddModalOpen(true)} />
+          <FinanceList
+            finances={finances}
+            isLoading={isLoading}
+            onEdit={handleEditFinance}
+            onDelete={handleDeleteFinance}
+            onAddNew={() => setIsAddModalOpen(true)}
           />
-          
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
-              Detalhes Financeiros
-            </h2>
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-leju-pink hover:bg-leju-pink/90">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Adicionar Item
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Adicionar Novo Item Financeiro</DialogTitle>
-                </DialogHeader>
-                
-                <FinanceForm
-                  finance={newFinance}
-                  onInputChange={handleInputChange}
-                  onSelectChange={handleSelectChange}
-                  onSubmit={handleAddFormSubmit}
-                  onCancel={() => setIsAddModalOpen(false)}
-                  submitButtonText="Adicionar"
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-          
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-leju-pink" />
-              <span className="ml-2">Carregando dados financeiros...</span>
-            </div>
-          ) : finances.length > 0 ? (
-            <FinanceTable 
-              finances={finances}
-              onEdit={handleEditFinance}
-              onDelete={handleDeleteFinance}
-            />
-          ) : (
-            <EmptyFinanceState onAddNew={() => setIsAddModalOpen(true)} />
-          )}
-          
-          {/* Modal de Edição */}
-          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Editar Item Financeiro</DialogTitle>
-              </DialogHeader>
-              
-              <FinanceForm
-                finance={newFinance}
-                onInputChange={handleInputChange}
-                onSelectChange={handleSelectChange}
-                onSubmit={handleUpdateFormSubmit}
-                onCancel={() => setIsEditModalOpen(false)}
-                submitButtonText="Atualizar"
-              />
-            </DialogContent>
-          </Dialog>
+          <FinanceModals
+            isAddModalOpen={isAddModalOpen}
+            setIsAddModalOpen={setIsAddModalOpen}
+            isEditModalOpen={isEditModalOpen}
+            setIsEditModalOpen={setIsEditModalOpen}
+            selectedFinance={selectedFinance}
+            newFinance={newFinance}
+            onInputChange={handleInputChange}
+            onSelectChange={handleSelectChange}
+            onAddSubmit={handleAddFormSubmit}
+            onUpdateSubmit={handleUpdateFormSubmit}
+            onCancel={() => {
+              setIsAddModalOpen(false);
+              setIsEditModalOpen(false);
+              setSelectedFinance(null);
+            }}
+          />
         </main>
       </div>
     </div>
