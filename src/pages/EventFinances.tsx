@@ -51,12 +51,11 @@ const EventFinances = () => {
     setIsEditModalOpen(true);
   };
 
-  // Wrapper para aceitar só Input e TextArea no onInputChange:
-  const onInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    handleInputChange(e);
+  // Ajuste do tipo para incluir HTMLSelectElement na tipagem
+  const onInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    handleInputChange(e as ChangeEvent<HTMLInputElement | HTMLTextAreaElement>);
   };
 
-  // onSelectChange (nome, valor)
   const onSelectChange = (name: string, value: string) => {
     handleSelectChange(name, value);
   };

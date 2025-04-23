@@ -11,7 +11,7 @@ export const AuthButton = () => {
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     toast.success('Logout realizado com sucesso');
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
   
   return (
@@ -20,6 +20,7 @@ export const AuthButton = () => {
       size="sm" 
       onClick={handleLogout}
       className="ml-2"
+      data-testid="auth-logout-button"
     >
       <LogOut className="h-4 w-4 mr-2" />
       Sair
