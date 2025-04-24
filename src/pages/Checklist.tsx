@@ -14,7 +14,7 @@ import { useEventContext } from '@/contexts/EventContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
-import type { Guest } from '@/types/guest';
+import type { Guest, GuestGroup } from '@/types/guest';
 
 interface GuestItemProps {
   id: string;
@@ -134,7 +134,7 @@ const Checklist = () => {
           id: g.id,
           name: g.name,
           email: g.email || undefined,
-          group: g.group_type,
+          group: g.group_type as GuestGroup,
           companions: g.companions,
           notes: g.notes || undefined,
           checkedIn: g.checked_in,
