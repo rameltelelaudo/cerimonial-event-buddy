@@ -2,16 +2,23 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react'; // ícone com O maiúsculo correto
+import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const AuthButton = () => {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    toast.success('Logout realizado com sucesso');
-    navigate('/login', { replace: true });
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success('Logout realizado com sucesso');
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Erro ao fazer logout');
+    }
   };
   
   return (

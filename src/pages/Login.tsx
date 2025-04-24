@@ -73,9 +73,11 @@ const Login = () => {
   
   return (
     <div className="min-h-screen flex items-center justify-center p-4" 
-         style={{ backgroundImage: "url('https://i.ibb.co/4gcB6kL/wedding-background.jpg')", 
-                  backgroundSize: "cover", 
-                  backgroundPosition: "center" }}>
+         style={{ 
+           background: "linear-gradient(135deg, #ffffff 0%, #ffd1dc 100%)",
+           backgroundSize: "cover", 
+           backgroundPosition: "center" 
+         }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img 

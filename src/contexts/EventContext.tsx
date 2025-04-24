@@ -10,6 +10,8 @@ interface EventContextType {
   setSelectedEvent: (event: Event | null) => void;
   events: Event[];
   addEvent: (event: Omit<Event, 'id'>) => Promise<Event | null>;
+  updateEvent: (id: string, event: Partial<Omit<Event, 'id'>>) => Promise<boolean>;
+  deleteEvent: (id: string) => Promise<boolean>;
   loading: boolean;
 }
 
@@ -52,6 +54,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const { data, error } = await supabase
           .from('leju_events')
           .select('*')
+          .eq('user_id', user.id)
           .order('date', { ascending: false });
 
         if (error) {
@@ -91,7 +94,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     fetchEvents();
-  }, [user, selectedEvent]);
+  }, [user]);
 
   // Function to add a new event
   const addEvent = async (eventData: Omit<Event, 'id'>): Promise<Event | null> => {
@@ -146,12 +149,112 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  // Function to update an event
+  const updateEvent = async (id: string, eventData: Partial<Omit<Event, 'id'>>): Promise<boolean> => {
+    if (!user) {
+      toast.error('Você precisa estar logado para editar eventos');
+      return false;
+    }
+
+    try {
+      // Prepare data for update
+      const updateData: any = {};
+      if (eventData.title !== undefined) updateData.title = eventData.title;
+      if (eventData.location !== undefined) updateData.location = eventData.location;
+      if (eventData.description !== undefined) updateData.description = eventData.description;
+      if (eventData.type !== undefined) updateData.type = eventData.type;
+      if (eventData.status !== undefined) updateData.status = validateEventStatus(eventData.status);
+      if (eventData.coverImage !== undefined) updateData.cover_image = eventData.coverImage;
+      if (eventData.date !== undefined) updateData.date = eventData.date.toISOString();
+
+      const { error } = await supabase
+        .from('leju_events')
+        .update(updateData)
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setEvents(prev => prev.map(event => {
+        if (event.id === id) {
+          return {
+            ...event,
+            ...eventData,
+            // Ensure date is a Date object
+            ...(eventData.date ? { date: new Date(eventData.date) } : {})
+          };
+        }
+        return event;
+      }));
+
+      // If the updated event is the selected event, update it too
+      if (selectedEvent && selectedEvent.id === id) {
+        setSelectedEvent(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            ...eventData,
+            // Ensure date is a Date object
+            ...(eventData.date ? { date: new Date(eventData.date) } : {})
+          };
+        });
+      }
+
+      toast.success('Evento atualizado com sucesso');
+      return true;
+    } catch (error: any) {
+      console.error('Error updating event:', error);
+      toast.error('Erro ao atualizar evento: ' + error.message);
+      return false;
+    }
+  };
+
+  // Function to delete an event
+  const deleteEvent = async (id: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('Você precisa estar logado para excluir eventos');
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('leju_events')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setEvents(prev => prev.filter(event => event.id !== id));
+
+      // If the deleted event is the selected event, clear it
+      if (selectedEvent && selectedEvent.id === id) {
+        setSelectedEvent(null);
+      }
+
+      toast.success('Evento excluído com sucesso');
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting event:', error);
+      toast.error('Erro ao excluir evento: ' + error.message);
+      return false;
+    }
+  };
+
   return (
     <EventContext.Provider value={{ 
       selectedEvent, 
       setSelectedEvent, 
       events, 
       addEvent,
+      updateEvent,
+      deleteEvent,
       loading
     }}>
       {children}
