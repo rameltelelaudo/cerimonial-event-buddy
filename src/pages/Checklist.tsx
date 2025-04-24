@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Check, Search, UserCheck, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEventContext } from '@/contexts/EventContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import type { Guest } from '@/types/guest';
 
 interface GuestItemProps {
   id: string;
@@ -105,21 +106,8 @@ const Checklist = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const { selectedEvent } = useEventContext();
-  
-  const [guests, setGuests] = useState(() => {
-    if (!selectedEvent) return [];
-    
-    const savedGuests = localStorage.getItem(`guests_${selectedEvent.id}`);
-    if (savedGuests) {
-      try {
-        return JSON.parse(savedGuests);
-      } catch (error) {
-        console.error('Erro ao carregar convidados:', error);
-        return [];
-      }
-    }
-    return [];
-  });
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     if (!selectedEvent) {
@@ -128,23 +116,71 @@ const Checklist = () => {
     }
   }, [selectedEvent, navigate]);
   
-  const handleCheckIn = (id: string) => {
+  useEffect(() => {
+    const fetchGuests = async () => {
+      if (!selectedEvent) return;
+      
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('leju_guests')
+          .select('*')
+          .eq('event_id', selectedEvent.id)
+          .order('name', { ascending: true });
+          
+        if (error) throw error;
+        
+        const transformedGuests: Guest[] = data.map(g => ({
+          id: g.id,
+          name: g.name,
+          email: g.email || undefined,
+          group: g.group_type,
+          companions: g.companions,
+          notes: g.notes || undefined,
+          checkedIn: g.checked_in,
+          checkInTime: g.check_in_time ? new Date(g.check_in_time) : undefined
+        }));
+        
+        setGuests(transformedGuests);
+      } catch (error: any) {
+        console.error('Error fetching guests:', error);
+        toast.error('Erro ao carregar convidados: ' + error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchGuests();
+  }, [selectedEvent]);
+  
+  const handleCheckIn = async (id: string) => {
     if (!selectedEvent) return;
     
-    setGuests(guests.map(guest => 
-      guest.id === id 
-        ? { ...guest, checkedIn: true, checkInTime: new Date() } 
-        : guest
-    ));
-    
-    toast.success("Check-in realizado com sucesso!");
-  };
-  
-  useEffect(() => {
-    if (selectedEvent && guests.length > 0) {
-      localStorage.setItem(`guests_${selectedEvent.id}`, JSON.stringify(guests));
+    try {
+      const checkInTime = new Date();
+      
+      const { error } = await supabase
+        .from('leju_guests')
+        .update({ 
+          checked_in: true, 
+          check_in_time: checkInTime.toISOString() 
+        })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      setGuests(guests.map(guest => 
+        guest.id === id 
+          ? { ...guest, checkedIn: true, checkInTime } 
+          : guest
+      ));
+      
+      toast.success('Check-in realizado com sucesso!');
+    } catch (error: any) {
+      console.error('Error during check-in:', error);
+      toast.error('Erro ao realizar check-in: ' + error.message);
     }
-  }, [guests, selectedEvent]);
+  };
   
   const filteredGuests = guests.filter(guest => 
     guest.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -198,7 +234,11 @@ const Checklist = () => {
           </div>
           
           <div className="rounded-lg border bg-card shadow-sm">
-            {guests.length === 0 ? (
+            {loading ? (
+              <div className="p-8 text-center">
+                <p className="text-muted-foreground">Carregando convidados...</p>
+              </div>
+            ) : guests.length === 0 ? (
               <div className="p-8 text-center">
                 <h3 className="text-lg font-medium mb-2">Nenhum convidado cadastrado</h3>
                 <p className="text-muted-foreground mb-4">
@@ -241,6 +281,7 @@ const Checklist = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Nº</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Acompanhantes</TableHead>
                     <TableHead>Status</TableHead>
@@ -250,18 +291,48 @@ const Checklist = () => {
                 <TableBody>
                   {filteredGuests.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">Nenhum convidado encontrado</TableCell>
+                      <TableCell colSpan={5} className="text-center">Nenhum convidado encontrado</TableCell>
                     </TableRow>
                   ) : (
-                    filteredGuests.map(guest => (
-                      <GuestItem 
+                    filteredGuests.map((guest, index) => (
+                      <TableRow 
                         key={guest.id}
-                        id={guest.id}
-                        name={guest.name}
-                        companions={guest.companions}
-                        checkedIn={guest.checkedIn}
-                        onCheckIn={handleCheckIn}
-                      />
+                        className={guest.checkedIn ? 'bg-green-50' : ''}
+                      >
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell className="font-medium">{guest.name}</TableCell>
+                        <TableCell>{guest.companions}</TableCell>
+                        <TableCell>
+                          {guest.checkedIn ? (
+                            <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                              <Check className="mr-1 h-3 w-3" /> Confirmado
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Pendente</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            size="sm" 
+                            variant={guest.checkedIn ? "outline" : "default"}
+                            className={guest.checkedIn ? "bg-green-100 text-green-800 border-green-300" : "bg-leju-pink hover:bg-leju-pink/90"}
+                            onClick={() => handleCheckIn(guest.id)}
+                            disabled={guest.checkedIn}
+                          >
+                            {guest.checkedIn ? (
+                              <>
+                                <Check className="mr-1 h-4 w-4" />
+                                Confirmado
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="mr-1 h-4 w-4" />
+                                Check-in
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     ))
                   )}
                 </TableBody>

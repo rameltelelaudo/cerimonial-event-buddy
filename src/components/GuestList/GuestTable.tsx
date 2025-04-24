@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -8,34 +7,35 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { guestGroups } from '@/data/guestsData';
-import { CheckCircle, Download, Filter, Search } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { CheckCircle, Download, Filter, Search, Edit, Trash2, FileText } from 'lucide-react';
+import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 
 interface GuestTableProps {
   guests: Guest[];
   onCheckIn: (id: string) => void;
+  onEdit: (guest: Guest) => void;
+  onDelete: (id: string) => void;
 }
 
-export const GuestTable = ({ guests, onCheckIn }: GuestTableProps) => {
+export const GuestTable = ({ guests, onCheckIn, onEdit, onDelete }: GuestTableProps) => {
   const [filters, setFilters] = useState<GuestFilters>({
     search: '',
     group: 'Todos',
     status: 'Todos'
   });
+  const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
 
   const filteredGuests = guests.filter(guest => {
-    // Filter by search term
     if (filters.search && !guest.name.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }
     
-    // Filter by group
     if (filters.group !== 'Todos' && guest.group !== filters.group) {
       return false;
     }
     
-    // Filter by status
     if (filters.status === 'Confirmados' && !guest.checkedIn) {
       return false;
     }
@@ -52,11 +52,12 @@ export const GuestTable = ({ guests, onCheckIn }: GuestTableProps) => {
   };
 
   const exportToCSV = () => {
-    const headers = ['Nome', 'Email', 'Grupo', 'Acompanhantes', 'Observações', 'Check-in', 'Horário do Check-in'];
+    const headers = ['Nº', 'Nome', 'Email', 'Grupo', 'Acompanhantes', 'Observações', 'Check-in', 'Horário do Check-in'];
     
     const csvContent = [
       headers.join(','),
-      ...filteredGuests.map(guest => [
+      ...filteredGuests.map((guest, index) => [
+        index + 1,
         guest.name,
         guest.email || '',
         guest.group,
@@ -77,6 +78,14 @@ export const GuestTable = ({ guests, onCheckIn }: GuestTableProps) => {
     document.body.removeChild(link);
     
     toast.success('Lista exportada com sucesso');
+  };
+
+  const handleDeleteConfirm = () => {
+    if (guestToDelete) {
+      onDelete(guestToDelete.id);
+      setGuestToDelete(null);
+      toast.success('Convidado removido com sucesso');
+    }
   };
 
   return (
@@ -143,7 +152,7 @@ export const GuestTable = ({ guests, onCheckIn }: GuestTableProps) => {
           </Popover>
           
           <Button variant="outline" size="sm" className="h-9" onClick={exportToCSV}>
-            <Download className="h-4 w-4 mr-2" />
+            <FileText className="h-4 w-4 mr-2" />
             Exportar
           </Button>
         </div>
@@ -153,21 +162,24 @@ export const GuestTable = ({ guests, onCheckIn }: GuestTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Nº</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead>Grupo</TableHead>
               <TableHead className="text-center">Acompanhantes</TableHead>
               <TableHead className="hidden md:table-cell">Observações</TableHead>
               <TableHead className="text-center">Check-in</TableHead>
+              <TableHead className="text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredGuests.length > 0 ? (
-              filteredGuests.map((guest) => (
+              filteredGuests.map((guest, index) => (
                 <TableRow 
                   key={guest.id} 
                   className={guest.checkedIn ? 'checked-in' : ''}
                 >
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell className="font-medium">{guest.name}</TableCell>
                   <TableCell className="hidden md:table-cell">{guest.email || '-'}</TableCell>
                   <TableCell>{guest.group}</TableCell>
@@ -194,11 +206,31 @@ export const GuestTable = ({ guests, onCheckIn }: GuestTableProps) => {
                       </Button>
                     )}
                   </TableCell>
+                  <TableCell>
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(guest)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setGuestToDelete(guest)}
+                        className="h-8 w-8 p-0 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center h-24 text-muted-foreground">
                   Nenhum convidado encontrado.
                 </TableCell>
               </TableRow>
@@ -206,6 +238,26 @@ export const GuestTable = ({ guests, onCheckIn }: GuestTableProps) => {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!guestToDelete} onOpenChange={() => setGuestToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+          </DialogHeader>
+          <p>
+            Tem certeza que deseja excluir o convidado {guestToDelete?.name}?
+            Esta ação não pode ser desfeita.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGuestToDelete(null)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm}>
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
