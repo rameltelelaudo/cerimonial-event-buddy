@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Event } from '@/types/event';
+import { format } from 'date-fns';
 
 interface AddEventFormProps {
   onSubmit: (eventData: Omit<Event, 'id'>) => Promise<void>;
