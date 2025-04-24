@@ -54,6 +54,11 @@ export const EventList = ({ events, onEditEvent, onDeleteEvent, onSelectEvent }:
     setShowSharePopover(null);
   };
 
+  const handleManageEvent = (event: Event) => {
+    onSelectEvent(event);
+    navigate('/guest-list');
+  };
+
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {events.map((event) => (
@@ -171,7 +176,7 @@ export const EventList = ({ events, onEditEvent, onDeleteEvent, onSelectEvent }:
             <Button
               variant="outline"
               className="border-leju-pink text-leju-pink hover:bg-leju-pink/10"
-              onClick={() => onSelectEvent(event)}
+              onClick={() => handleManageEvent(event)}
             >
               Gerenciar Evento
             </Button>

@@ -39,6 +39,8 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      
+      {/* Rota pública para formulário de convidados - removida do ProtectedRoute */}
       <Route path="/public-guest-form/:eventId" element={<PublicGuestForm />} />
       
       {/* Rotas protegidas */}

@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Finance } from '@/types/finance';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useFinances = (eventId: string | undefined) => {
   const [finances, setFinances] = useState<Finance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
   
   // Estado para o formulário de nova despesa/receita
   const [newFinance, setNewFinance] = useState({
@@ -76,7 +78,12 @@ export const useFinances = (eventId: string | undefined) => {
   const handleAddFinance = async () => {
     if (!eventId) {
       toast.error("ID do evento não encontrado");
-      return;
+      return false;
+    }
+    
+    if (!user) {
+      toast.error("Você precisa estar logado para adicionar um item financeiro");
+      return false;
     }
     
     try {
@@ -89,7 +96,8 @@ export const useFinances = (eventId: string | undefined) => {
           type: newFinance.type,
           status: newFinance.status,
           date: newFinance.date,
-          event_id: eventId
+          event_id: eventId,
+          user_id: user.id // Add the user ID here to satisfy RLS policy
         })
         .select()
         .single();
@@ -131,6 +139,11 @@ export const useFinances = (eventId: string | undefined) => {
   };
   
   const handleUpdateFinance = async (id: string) => {
+    if (!user) {
+      toast.error("Você precisa estar logado para atualizar um item financeiro");
+      return false;
+    }
+    
     try {
       const { data, error } = await supabase
         .from('leju_finances')
@@ -140,7 +153,8 @@ export const useFinances = (eventId: string | undefined) => {
           category: newFinance.category,
           type: newFinance.type,
           status: newFinance.status,
-          date: newFinance.date
+          date: newFinance.date,
+          user_id: user.id // Add the user ID here to satisfy RLS policy
         })
         .eq('id', id)
         .select()
