@@ -40,7 +40,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/login" element={<Login />} />
       
-      {/* Public routes */}
+      {/* Public routes - Esta rota não requer autenticação */}
       <Route path="/public-guest-form/:eventId" element={<PublicGuestForm />} />
       
       {/* Protected routes */}

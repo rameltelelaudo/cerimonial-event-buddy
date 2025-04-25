@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { GuestGroup } from '@/types/guest';
@@ -51,6 +52,7 @@ const PublicGuestForm = () => {
       }
       
       try {
+        // Modificado para usar a tabela leju_events e remover a restrição de usuário
         const { data, error } = await supabase
           .from('leju_events')
           .select('*')
@@ -85,6 +87,7 @@ const PublicGuestForm = () => {
   
   const fetchGuests = async (eventId: string) => {
     try {
+      // Modificado para usar a tabela leju_guests e remover a restrição de usuário
       const { data, error } = await supabase
         .from('leju_guests')
         .select('*')
@@ -141,6 +144,7 @@ const PublicGuestForm = () => {
           companions: guest.companions,
           notes: guest.notes.trim() || null,
           checked_in: false,
+          // Mantem o user_id do evento para manter a referência
           user_id: event.user_id
         })
         .select();
