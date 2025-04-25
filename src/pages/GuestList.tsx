@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useEventContext } from '@/contexts/EventContext';
@@ -32,11 +33,9 @@ const GuestList = () => {
   const navigate = useNavigate();
   const { selectedEvent } = useEventContext();
   
-  // Initialize the guest list
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // State for guest dialog
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
   const [isEditGuestOpen, setIsEditGuestOpen] = useState(false);
   const [isDeleteGuestOpen, setIsDeleteGuestOpen] = useState(false);
@@ -50,7 +49,6 @@ const GuestList = () => {
     notes: ''
   });
   
-  // Redirect if no event is selected
   useEffect(() => {
     if (!selectedEvent) {
       toast.info("Selecione um evento primeiro");
@@ -58,7 +56,6 @@ const GuestList = () => {
     }
   }, [selectedEvent, navigate]);
   
-  // Fetch guests from Supabase when event is selected
   useEffect(() => {
     const fetchGuests = async () => {
       if (!selectedEvent) return;
@@ -77,7 +74,6 @@ const GuestList = () => {
         }
         
         if (data) {
-          // Transform data to match Guest type
           const transformedGuests: Guest[] = data.map(g => ({
             id: g.id,
             name: g.name,
@@ -145,7 +141,6 @@ const GuestList = () => {
         throw error;
       }
       
-      // Add new guest to state
       const guest: Guest = {
         id: data.id,
         name: data.name,
@@ -159,7 +154,6 @@ const GuestList = () => {
       setGuests([guest, ...guests]);
       toast.success('Convidado adicionado com sucesso');
       
-      // Reset form
       setNewGuest({
         name: '',
         email: '',
@@ -211,7 +205,6 @@ const GuestList = () => {
         throw error;
       }
       
-      // Update guest in state
       setGuests(guests.map(guest => 
         guest.id === selectedGuestId 
           ? {
@@ -228,7 +221,6 @@ const GuestList = () => {
       toast.success('Convidado atualizado com sucesso');
       setIsEditGuestOpen(false);
       
-      // Reset form
       setNewGuest({
         name: '',
         email: '',
@@ -308,7 +300,6 @@ const GuestList = () => {
         {!isMobile && <Sidebar />}
         
         <main className="flex-1 p-6 backdrop-blur-sm bg-white/70">
-          {/* Header section */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-2">
               <Button
@@ -434,7 +425,6 @@ const GuestList = () => {
             </div>
           </div>
           
-          {/* Guest stats section */}
           <div className="grid gap-4 sm:grid-cols-3 mb-6">
             <Card className="bg-white/80">
               <CardHeader className="pb-2">
@@ -462,7 +452,6 @@ const GuestList = () => {
             </Card>
           </div>
           
-          {/* Use the GuestTable component */}
           <GuestTable 
             guests={guests} 
             onCheckIn={handleCheckIn}
@@ -473,7 +462,6 @@ const GuestList = () => {
             }}
           />
           
-          {/* Edit Guest Dialog */}
           <Dialog open={isEditGuestOpen} onOpenChange={setIsEditGuestOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
@@ -565,7 +553,6 @@ const GuestList = () => {
             </DialogContent>
           </Dialog>
           
-          {/* Delete Guest Dialog */}
           <Dialog open={isDeleteGuestOpen} onOpenChange={setIsDeleteGuestOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
