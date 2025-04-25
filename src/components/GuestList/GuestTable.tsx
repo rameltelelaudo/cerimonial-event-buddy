@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Guest, GuestFilters } from '@/types/guest';
@@ -7,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { guestGroups } from '@/data/guestsData';
-import { CheckCircle, Download, Filter, Search, Edit, Trash2, FileText } from 'lucide-react';
+import { CheckCircle, Download, Filter, Search, Edit, Trash2, FileText, Printer, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface GuestTableProps {
   guests: Guest[];
@@ -26,6 +28,7 @@ export const GuestTable = ({ guests, onCheckIn, onEdit, onDelete }: GuestTablePr
     status: 'Todos'
   });
   const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   const filteredGuests = guests.filter(guest => {
     if (filters.search && !guest.name.toLowerCase().includes(filters.search.toLowerCase())) {
@@ -78,6 +81,81 @@ export const GuestTable = ({ guests, onCheckIn, onEdit, onDelete }: GuestTablePr
     document.body.removeChild(link);
     
     toast.success('Lista exportada com sucesso');
+  };
+
+  const printToPDF = () => {
+    const printWindow = window.open('', '_blank');
+    
+    if (!printWindow) {
+      toast.error('Por favor, permita popups para esta página');
+      return;
+    }
+    
+    // Build the HTML content for printing
+    const guestListHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Lista de Convidados</title>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          h1 { color: #333; text-align: center; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; }
+          th { background-color: #f2f2f2; text-align: left; padding: 8px; border: 1px solid #ddd; }
+          td { padding: 8px; border: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .print-info { text-align: center; color: #666; margin-top: 30px; font-size: 12px; }
+          .check-icon { color: green; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <h1>Lista de Convidados</h1>
+        <p>Data de impressão: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Nº</th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Grupo</th>
+              <th>Acompanhantes</th>
+              <th>Observações</th>
+              <th>Check-in</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredGuests.map((guest, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${guest.name}</td>
+                <td>${guest.email || '-'}</td>
+                <td>${guest.group}</td>
+                <td>${guest.companions}</td>
+                <td>${guest.notes || '-'}</td>
+                <td>${guest.checkedIn ? `<span class="check-icon">✓</span> ${guest.checkInTime ? format(guest.checkInTime, 'dd/MM/yyyy HH:mm', { locale: ptBR }) : ''}` : '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="print-info">
+          <p>Total de convidados: ${filteredGuests.length}</p>
+          <p>Total de confirmados: ${filteredGuests.filter(g => g.checkedIn).length}</p>
+          <p>Total de acompanhantes: ${filteredGuests.reduce((acc, g) => acc + g.companions, 0)}</p>
+        </div>
+        
+        <script>
+          window.onload = function() { window.print(); }
+        </script>
+      </body>
+      </html>
+    `;
+    
+    printWindow.document.open();
+    printWindow.document.write(guestListHTML);
+    printWindow.document.close();
   };
 
   const handleDeleteConfirm = () => {
@@ -151,10 +229,24 @@ export const GuestTable = ({ guests, onCheckIn, onEdit, onDelete }: GuestTablePr
             </PopoverContent>
           </Popover>
           
-          <Button variant="outline" size="sm" className="h-9" onClick={exportToCSV}>
-            <FileText className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                <FileText className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportToCSV}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Exportar CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={printToPDF}>
+                <Printer className="h-4 w-4 mr-2" />
+                Imprimir / PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
@@ -237,6 +329,10 @@ export const GuestTable = ({ guests, onCheckIn, onEdit, onDelete }: GuestTablePr
             )}
           </TableBody>
         </Table>
+      </div>
+      
+      <div ref={printRef} className="hidden">
+        {/* This div will be used for printing */}
       </div>
 
       <Dialog open={!!guestToDelete} onOpenChange={() => setGuestToDelete(null)}>

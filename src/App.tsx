@@ -40,10 +40,10 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/login" element={<Login />} />
       
-      {/* Rota pública para formulário de convidados - removida do ProtectedRoute */}
+      {/* Public routes */}
       <Route path="/public-guest-form/:eventId" element={<PublicGuestForm />} />
       
-      {/* Rotas protegidas */}
+      {/* Protected routes */}
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
       <Route path="/guest-list" element={<ProtectedRoute><GuestList /></ProtectedRoute>} />
@@ -54,7 +54,7 @@ const AppRoutes = () => {
       <Route path="/finances/:eventId" element={<ProtectedRoute><EventFinances /></ProtectedRoute>} />
       <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
       
-      {/* Rota de fallback */}
+      {/* Fallback route */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
