@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,14 +50,18 @@ const PublicGuestForm = () => {
           .single();
           
         if (error) {
+          console.error('Error fetching event:', error);
           throw error;
         }
         
         if (data) {
+          console.log('Event data found:', data);
           setEvent({
             ...data,
             date: new Date(data.date)
           });
+        } else {
+          console.log('No event data found for ID:', eventId);
         }
       } catch (error) {
         console.error('Error fetching event:', error);
@@ -96,7 +99,6 @@ const PublicGuestForm = () => {
     setSubmitting(true);
     
     try {
-      // Salvar convidado no Supabase
       const { data, error } = await supabase
         .from('leju_guests')
         .insert({
@@ -107,15 +109,15 @@ const PublicGuestForm = () => {
           companions: guest.companions,
           notes: guest.notes.trim() || null,
           checked_in: false,
-          user_id: event.user_id // Important: associate the guest with the event owner
+          user_id: event.user_id
         })
         .select();
         
       if (error) {
+        console.error('Error inserting guest:', error);
         throw error;
       }
       
-      // Resetar formulário e mostrar mensagem de sucesso
       setGuest({
         name: '',
         email: '',
@@ -127,7 +129,6 @@ const PublicGuestForm = () => {
       setSuccess(true);
       toast.success("Confirmação recebida com sucesso!");
       
-      // Resetar mensagem de sucesso após alguns segundos
       setTimeout(() => {
         setSuccess(false);
       }, 5000);
@@ -164,10 +165,12 @@ const PublicGuestForm = () => {
   }
   
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4" 
-        style={{ backgroundImage: "url('https://i.ibb.co/4gcB6kL/wedding-background.jpg')", 
-                 backgroundSize: "cover", 
-                 backgroundPosition: "center" }}>
+    <div className="min-h-screen py-12 px-4" 
+        style={{ 
+          background: "linear-gradient(to right, #e6b980 0%, #eacda3 100%)",
+          backgroundSize: "cover", 
+          backgroundPosition: "center" 
+        }}>
       <div className="max-w-md mx-auto">
         <Card className="backdrop-blur-sm bg-white/90 shadow-lg">
           <CardHeader className="text-center">
@@ -178,15 +181,15 @@ const PublicGuestForm = () => {
                 className="h-12 w-auto mx-auto"
               />
             </div>
-            <CardTitle>{event.title}</CardTitle>
+            <CardTitle>{event?.title}</CardTitle>
             <CardDescription>
-              {new Date(event.date).toLocaleDateString('pt-BR', { 
+              {event && new Date(event.date).toLocaleDateString('pt-BR', { 
                 day: '2-digit', 
                 month: 'long', 
                 year: 'numeric' 
               })}
-              {' • '}
-              {event.location}
+              {event && ' • '}
+              {event?.location}
             </CardDescription>
           </CardHeader>
           <CardContent>

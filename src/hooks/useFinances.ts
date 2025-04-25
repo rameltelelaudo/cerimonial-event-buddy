@@ -87,14 +87,22 @@ export const useFinances = (eventId: string | undefined) => {
     }
     
     try {
+      // Validar que status é um dos valores permitidos
+      const validStatuses = ['pago', 'pendente', 'cancelado'];
+      const status = validStatuses.includes(newFinance.status) ? newFinance.status : 'pendente';
+      
+      // Validar que type é um dos valores permitidos
+      const validTypes = ['receita', 'despesa'];
+      const type = validTypes.includes(newFinance.type) ? newFinance.type : 'despesa';
+      
       const { data, error } = await supabase
         .from('leju_finances')
         .insert({
           description: newFinance.description,
           amount: Number(newFinance.amount),
           category: newFinance.category,
-          type: newFinance.type,
-          status: newFinance.status,
+          type: type,
+          status: status,
           date: newFinance.date,
           event_id: eventId,
           user_id: user.id // Add the user ID here to satisfy RLS policy
@@ -145,14 +153,22 @@ export const useFinances = (eventId: string | undefined) => {
     }
     
     try {
+      // Validar que status é um dos valores permitidos
+      const validStatuses = ['pago', 'pendente', 'cancelado'];
+      const status = validStatuses.includes(newFinance.status) ? newFinance.status : 'pendente';
+      
+      // Validar que type é um dos valores permitidos
+      const validTypes = ['receita', 'despesa'];
+      const type = validTypes.includes(newFinance.type) ? newFinance.type : 'despesa';
+      
       const { data, error } = await supabase
         .from('leju_finances')
         .update({
           description: newFinance.description,
           amount: Number(newFinance.amount),
           category: newFinance.category,
-          type: newFinance.type,
-          status: newFinance.status,
+          type: type,
+          status: status,
           date: newFinance.date,
           user_id: user.id // Add the user ID here to satisfy RLS policy
         })

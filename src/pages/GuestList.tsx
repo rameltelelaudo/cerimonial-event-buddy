@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
@@ -9,19 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, Download, Filter, Search, UserPlus, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useEventContext } from '@/contexts/EventContext';
 import { Guest, GuestGroup } from '@/types/guest';
 import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft, UserPlus } from 'lucide-react';
+import { GuestTable } from '@/components/GuestList/GuestTable';
+import { toast } from 'sonner';
 
 const guestGroups: GuestGroup[] = [
   "Família",
@@ -36,18 +31,17 @@ const GuestList = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { selectedEvent } = useEventContext();
-  const [filters, setFilters] = useState({
-    search: '',
-    group: 'Todos',
-    status: 'Todos'
-  });
   
   // Initialize the guest list
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // State for adding guest dialog
+  // State for guest dialog
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
+  const [isEditGuestOpen, setIsEditGuestOpen] = useState(false);
+  const [isDeleteGuestOpen, setIsDeleteGuestOpen] = useState(false);
+  const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
+  
   const [newGuest, setNewGuest] = useState({
     name: '',
     email: '',
@@ -107,6 +101,16 @@ const GuestList = () => {
     
     fetchGuests();
   }, [selectedEvent]);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewGuest(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewGuest(prev => ({ ...prev, [name]: parseInt(value) || 0 }));
+  };
   
   const handleAddGuest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,6 +175,97 @@ const GuestList = () => {
     }
   };
   
+  const handleEditGuest = (guest: Guest) => {
+    setSelectedGuestId(guest.id);
+    setNewGuest({
+      name: guest.name,
+      email: guest.email || '',
+      group: guest.group,
+      companions: guest.companions,
+      notes: guest.notes || ''
+    });
+    setIsEditGuestOpen(true);
+  };
+  
+  const handleUpdateGuest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedEvent || !selectedGuestId) {
+      toast.error("Selecione um convidado para editar");
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('leju_guests')
+        .update({
+          name: newGuest.name.trim(),
+          email: newGuest.email.trim() || null,
+          group_type: newGuest.group,
+          companions: newGuest.companions,
+          notes: newGuest.notes.trim() || null
+        })
+        .eq('id', selectedGuestId);
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Update guest in state
+      setGuests(guests.map(guest => 
+        guest.id === selectedGuestId 
+          ? {
+              ...guest,
+              name: newGuest.name,
+              email: newGuest.email || undefined,
+              group: newGuest.group,
+              companions: newGuest.companions,
+              notes: newGuest.notes || undefined
+            }
+          : guest
+      ));
+      
+      toast.success('Convidado atualizado com sucesso');
+      setIsEditGuestOpen(false);
+      
+      // Reset form
+      setNewGuest({
+        name: '',
+        email: '',
+        group: 'Família',
+        companions: 0,
+        notes: ''
+      });
+      setSelectedGuestId(null);
+    } catch (error: any) {
+      console.error('Error updating guest:', error);
+      toast.error('Erro ao atualizar convidado: ' + error.message);
+    }
+  };
+  
+  const handleDeleteGuest = async () => {
+    if (!selectedGuestId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('leju_guests')
+        .delete()
+        .eq('id', selectedGuestId);
+        
+      if (error) {
+        throw error;
+      }
+      
+      setGuests(guests.filter(guest => guest.id !== selectedGuestId));
+      setIsDeleteGuestOpen(false);
+      setSelectedGuestId(null);
+      toast.success('Convidado removido com sucesso');
+    } catch (error: any) {
+      console.error('Error deleting guest:', error);
+      toast.error('Erro ao remover convidado: ' + error.message);
+    }
+  };
+  
   const handleCheckIn = async (id: string) => {
     try {
       const checkInTime = new Date();
@@ -200,87 +295,20 @@ const GuestList = () => {
     }
   };
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewGuest(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewGuest(prev => ({ ...prev, [name]: parseInt(value) || 0 }));
-  };
-  
-  const exportToCSV = () => {
-    if (!selectedEvent || !filteredGuests.length) {
-      toast.error('Não há convidados para exportar');
-      return;
-    }
-    
-    const headers = ['Nome', 'Email', 'Grupo', 'Acompanhantes', 'Observações', 'Check-in', 'Horário do Check-in'];
-    
-    const csvContent = [
-      headers.join(','),
-      ...filteredGuests.map(guest => [
-        guest.name,
-        guest.email || '',
-        guest.group,
-        guest.companions,
-        guest.notes?.replace(/,/g, ';') || '',
-        guest.checkedIn ? 'Sim' : 'Não',
-        guest.checkInTime ? format(new Date(guest.checkInTime), 'dd/MM/yyyy HH:mm') : ''
-      ].join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `convidados-${selectedEvent.title.replace(/\s+/g, '-')}-${format(new Date(), 'dd-MM-yyyy')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast.success('Lista exportada com sucesso');
-  };
-  
-  // Filter guests with search and filter options
-  const filteredGuests = guests.filter(guest => {
-    // Filter by search term
-    if (filters.search && !guest.name.toLowerCase().includes(filters.search.toLowerCase())) {
-      return false;
-    }
-    
-    // Filter by group
-    if (filters.group !== 'Todos' && guest.group !== filters.group) {
-      return false;
-    }
-    
-    // Filter by status
-    if (filters.status === 'Confirmados' && !guest.checkedIn) {
-      return false;
-    }
-    if (filters.status === 'Não Confirmados' && guest.checkedIn) {
-      return false;
-    }
-    
-    return true;
-  });
-  
   if (!selectedEvent) {
     return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
   }
 
   return (
     <div className="flex min-h-screen flex-col" 
-         style={{ backgroundImage: "url('https://i.ibb.co/4gcB6kL/wedding-background.jpg')", 
-                  backgroundSize: "cover", 
-                  backgroundPosition: "center" }}>
+         style={{ background: "linear-gradient(to right, #e6b980 0%, #eacda3 100%)" }}>
       <Navbar />
       
       <div className="flex flex-1">
         {!isMobile && <Sidebar />}
         
-        <main className="flex-1 p-6 backdrop-blur-sm bg-white/60">
+        <main className="flex-1 p-6 backdrop-blur-sm bg-white/70">
+          {/* Header section */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-2">
               <Button
@@ -406,7 +434,7 @@ const GuestList = () => {
             </div>
           </div>
           
-          {/* Estatísticas de convidados */}
+          {/* Guest stats section */}
           <div className="grid gap-4 sm:grid-cols-3 mb-6">
             <Card className="bg-white/80">
               <CardHeader className="pb-2">
@@ -434,155 +462,134 @@ const GuestList = () => {
             </Card>
           </div>
           
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar convidados..."
-                  className="pl-8 bg-white/80"
-                  value={filters.search}
-                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                />
-              </div>
-              
-              <div className="flex gap-2 items-center">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9">
-                      <Filter className="h-4 w-4 mr-2" />
-                      Filtros
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80" align="end">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-sm">Grupo</h4>
-                        <Select
-                          value={filters.group}
-                          onValueChange={(value) => setFilters({ ...filters, group: value as any })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um grupo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Todos">Todos</SelectItem>
-                            {guestGroups.map((group) => (
-                              <SelectItem key={group} value={group}>
-                                {group}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-sm">Status</h4>
-                        <Select
-                          value={filters.status}
-                          onValueChange={(value) => setFilters({ ...filters, status: value as any })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Todos">Todos</SelectItem>
-                            <SelectItem value="Confirmados">Confirmados</SelectItem>
-                            <SelectItem value="Não Confirmados">Não Confirmados</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+          {/* Use the GuestTable component */}
+          <GuestTable 
+            guests={guests} 
+            onCheckIn={handleCheckIn}
+            onEdit={handleEditGuest}
+            onDelete={(id) => {
+              setSelectedGuestId(id);
+              setIsDeleteGuestOpen(true);
+            }}
+          />
+          
+          {/* Edit Guest Dialog */}
+          <Dialog open={isEditGuestOpen} onOpenChange={setIsEditGuestOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Editar Convidado</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleUpdateGuest} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome Completo *</Label>
+                  <Input 
+                    id="name" 
+                    name="name"
+                    value={newGuest.name} 
+                    onChange={handleInputChange} 
+                    placeholder="Nome do convidado"
+                    required
+                  />
+                </div>
                 
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input 
+                    id="email" 
+                    name="email"
+                    type="email" 
+                    value={newGuest.email} 
+                    onChange={handleInputChange} 
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="group">Grupo</Label>
+                  <Select
+                    value={newGuest.group}
+                    onValueChange={(value) => setNewGuest({...newGuest, group: value as GuestGroup})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um grupo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {guestGroups.map((group) => (
+                        <SelectItem key={group} value={group}>
+                          {group}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="companions">Acompanhantes</Label>
+                  <Input 
+                    id="companions" 
+                    name="companions"
+                    type="number" 
+                    min={0}
+                    value={newGuest.companions} 
+                    onChange={handleNumberInput} 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Observações</Label>
+                  <Textarea 
+                    id="notes" 
+                    name="notes"
+                    value={newGuest.notes} 
+                    onChange={handleInputChange} 
+                    placeholder="Mesa, restrição alimentar, etc."
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    onClick={() => setIsEditGuestOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="bg-leju-pink hover:bg-leju-pink/90"
+                  >
+                    Atualizar
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+          
+          {/* Delete Guest Dialog */}
+          <Dialog open={isDeleteGuestOpen} onOpenChange={setIsDeleteGuestOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Excluir Convidado</DialogTitle>
+              </DialogHeader>
+              <p>
+                Tem certeza que deseja excluir este convidado? Esta ação não pode ser desfeita.
+              </p>
+              <DialogFooter>
                 <Button 
                   variant="outline" 
-                  size="sm" 
-                  className="h-9 bg-white/80" 
-                  onClick={exportToCSV}
-                  disabled={filteredGuests.length === 0}
+                  onClick={() => setIsDeleteGuestOpen(false)}
                 >
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
+                  Cancelar
                 </Button>
-              </div>
-            </div>
-            
-            {guests.length === 0 ? (
-              <div className="rounded-md border p-8 text-center bg-white/80">
-                <h3 className="text-lg font-medium mb-2">Nenhum convidado cadastrado</h3>
-                <p className="text-muted-foreground mb-4">
-                  Adicione convidados para este evento
-                </p>
                 <Button 
-                  onClick={() => setIsAddGuestOpen(true)}
-                  className="bg-leju-pink hover:bg-leju-pink/90"
+                  variant="destructive" 
+                  onClick={handleDeleteGuest}
                 >
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Adicionar Convidado
+                  Excluir
                 </Button>
-              </div>
-            ) : (
-              <div className="rounded-md border bg-white/80">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead className="hidden md:table-cell">Email</TableHead>
-                      <TableHead>Grupo</TableHead>
-                      <TableHead className="text-center">Acompanhantes</TableHead>
-                      <TableHead className="hidden md:table-cell">Observações</TableHead>
-                      <TableHead className="text-center">Check-in</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredGuests.length > 0 ? (
-                      filteredGuests.map((guest) => (
-                        <TableRow 
-                          key={guest.id} 
-                          className={guest.checkedIn ? 'bg-green-50/60' : ''}
-                        >
-                          <TableCell className="font-medium">{guest.name}</TableCell>
-                          <TableCell className="hidden md:table-cell">{guest.email || '-'}</TableCell>
-                          <TableCell>{guest.group}</TableCell>
-                          <TableCell className="text-center">{guest.companions}</TableCell>
-                          <TableCell className="hidden md:table-cell truncate max-w-[200px]">
-                            {guest.notes || '-'}
-                          </TableCell>
-                          <TableCell>
-                            {guest.checkedIn ? (
-                              <div className="flex flex-col items-center text-center">
-                                <CheckCircle className="h-5 w-5 text-green-600" />
-                                <span className="text-xs mt-1">
-                                  {guest.checkInTime && format(new Date(guest.checkInTime), 'HH:mm', { locale: ptBR })}
-                                </span>
-                              </div>
-                            ) : (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="mx-auto block hover:text-green-600"
-                                onClick={() => handleCheckIn(guest.id)}
-                              >
-                                Confirmar
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
-                          Nenhum convidado encontrado.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
     </div>
