@@ -1,17 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { GuestGroup } from '@/types/guest';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Search } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { GuestFormFields } from '@/components/PublicGuest/GuestFormFields';
-import { GuestListTable } from '@/components/PublicGuest/GuestListTable';
 import { PublicGuestHeader } from '@/components/PublicGuest/PublicGuestHeader';
+import { LoadingState } from '@/components/PublicGuest/LoadingState';
+import { SuccessMessage } from '@/components/PublicGuest/SuccessMessage';
+import { GuestListView } from '@/components/PublicGuest/GuestListView';
+import { GuestModals } from '@/components/PublicGuest/GuestModals';
 
 const guestGroups: GuestGroup[] = [
   "Família",
@@ -270,12 +269,7 @@ const PublicGuestForm = () => {
     : guests;
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-leju-pink" />
-        <span className="ml-2">Carregando...</span>
-      </div>
-    );
+    return <LoadingState />;
   }
   
   if (!event) {
@@ -327,16 +321,7 @@ const PublicGuestForm = () => {
             
             {viewMode === 'form' ? (
               success ? (
-                <div className="text-center py-6">
-                  <h3 className="text-xl text-green-600 font-semibold mb-2">Presença confirmada!</h3>
-                  <p className="mb-4">Obrigado por confirmar sua presença.</p>
-                  <Button 
-                    onClick={() => setSuccess(false)}
-                    className="bg-leju-pink hover:bg-leju-pink/90"
-                  >
-                    Adicionar outro convidado
-                  </Button>
-                </div>
+                <SuccessMessage onAddAnother={() => setSuccess(false)} />
               ) : (
                 <form onSubmit={handleSubmit}>
                   <GuestFormFields 
@@ -350,28 +335,14 @@ const PublicGuestForm = () => {
                 </form>
               )
             ) : (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar convidados..."
-                      className="pl-8"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="rounded-md border overflow-hidden">
-                  <GuestListTable 
-                    guests={filteredGuests}
-                    handleEditGuest={handleEditGuest}
-                    setSelectedGuestId={setSelectedGuestId}
-                    setIsDeleteGuestOpen={setIsDeleteGuestOpen}
-                  />
-                </div>
-              </div>
+              <GuestListView 
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                filteredGuests={filteredGuests}
+                handleEditGuest={handleEditGuest}
+                setSelectedGuestId={setSelectedGuestId}
+                setIsDeleteGuestOpen={setIsDeleteGuestOpen}
+              />
             )}
           </CardContent>
           <CardFooter className="flex justify-center">
@@ -380,50 +351,21 @@ const PublicGuestForm = () => {
             </p>
           </CardFooter>
         </Card>
-        
-        <Dialog open={isEditGuestOpen} onOpenChange={setIsEditGuestOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Editar Convidado</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleUpdateGuest}>
-              <GuestFormFields 
-                guest={guest}
-                guestGroups={guestGroups}
-                handleInputChange={handleInputChange}
-                handleNumberInput={handleNumberInput}
-                setGuest={setGuest}
-                submitting={submitting}
-                isEdit={true}
-              />
-            </form>
-          </DialogContent>
-        </Dialog>
-        
-        <Dialog open={isDeleteGuestOpen} onOpenChange={setIsDeleteGuestOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Excluir Convidado</DialogTitle>
-            </DialogHeader>
-            <p>
-              Tem certeza que deseja excluir este convidado? Esta ação não pode ser desfeita.
-            </p>
-            <DialogFooter>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsDeleteGuestOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteGuest}
-              >
-                Excluir
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+
+        <GuestModals 
+          isEditGuestOpen={isEditGuestOpen}
+          setIsEditGuestOpen={setIsEditGuestOpen}
+          isDeleteGuestOpen={isDeleteGuestOpen}
+          setIsDeleteGuestOpen={setIsDeleteGuestOpen}
+          guest={guest}
+          guestGroups={guestGroups}
+          handleInputChange={handleInputChange}
+          handleNumberInput={handleNumberInput}
+          setGuest={setGuest}
+          submitting={submitting}
+          handleUpdateGuest={handleUpdateGuest}
+          handleDeleteGuest={handleDeleteGuest}
+        />
       </div>
     </div>
   );
