@@ -1,18 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { GuestGroup } from '@/types/guest';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Search, Edit, Trash2, Check, X, ArrowLeft } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { GuestFormFields } from '@/components/PublicGuest/GuestFormFields';
+import { GuestListTable } from '@/components/PublicGuest/GuestListTable';
+import { PublicGuestHeader } from '@/components/PublicGuest/PublicGuestHeader';
 
 const guestGroups: GuestGroup[] = [
   "Família",
@@ -32,7 +30,6 @@ const PublicGuestForm = () => {
   const [viewMode, setViewMode] = useState<'form' | 'list'>('form');
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Guest list state
   const [guests, setGuests] = useState<any[]>([]);
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
   const [isEditGuestOpen, setIsEditGuestOpen] = useState(false);
@@ -72,7 +69,6 @@ const PublicGuestForm = () => {
             date: new Date(data.date)
           });
           
-          // Fetch guests after event is loaded
           fetchGuests(data.id);
         } else {
           console.log('No event data found for ID:', eventId);
@@ -165,7 +161,6 @@ const PublicGuestForm = () => {
       setSuccess(true);
       toast.success("Confirmação recebida com sucesso!");
       
-      // Refresh guest list
       if (eventId) {
         fetchGuests(eventId);
       }
@@ -221,7 +216,6 @@ const PublicGuestForm = () => {
       
       toast.success('Convidado atualizado com sucesso');
       
-      // Refresh guest list
       if (eventId) {
         fetchGuests(eventId);
       }
@@ -259,7 +253,6 @@ const PublicGuestForm = () => {
       setIsDeleteGuestOpen(false);
       toast.success('Convidado removido com sucesso');
       
-      // Refresh guest list
       if (eventId) {
         fetchGuests(eventId);
       }
@@ -301,31 +294,15 @@ const PublicGuestForm = () => {
   
   return (
     <div className="min-h-screen py-12 px-4" 
-        style={{ 
-          background: "linear-gradient(to right, #e6b980 0%, #eacda3 100%)",
-          backgroundSize: "cover", 
-          backgroundPosition: "center" 
-        }}>
+      style={{ 
+        background: "linear-gradient(to right, #e6b980 0%, #eacda3 100%)",
+        backgroundSize: "cover", 
+        backgroundPosition: "center" 
+      }}>
       <div className="max-w-4xl mx-auto">
         <Card className="backdrop-blur-sm bg-white/90 shadow-lg">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4">
-              <img 
-                src="https://i.ibb.co/G40sCgqs/images.jpg" 
-                alt="Leju App" 
-                className="h-12 w-auto mx-auto"
-              />
-            </div>
-            <CardTitle>{event?.title}</CardTitle>
-            <CardDescription>
-              {event && new Date(event.date).toLocaleDateString('pt-BR', { 
-                day: '2-digit', 
-                month: 'long', 
-                year: 'numeric' 
-              })}
-              {event && ' • '}
-              {event?.location}
-            </CardDescription>
+          <CardHeader>
+            <PublicGuestHeader event={event} />
           </CardHeader>
           <CardContent>
             <div className="mb-4">
@@ -360,87 +337,15 @@ const PublicGuestForm = () => {
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome Completo *</Label>
-                    <Input 
-                      id="name" 
-                      name="name"
-                      value={guest.name} 
-                      onChange={handleInputChange} 
-                      placeholder="Digite seu nome completo"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
-                    <Input 
-                      id="email" 
-                      name="email"
-                      type="email" 
-                      value={guest.email} 
-                      onChange={handleInputChange} 
-                      placeholder="seu.email@exemplo.com"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="group">Grupo</Label>
-                    <Select
-                      value={guest.group}
-                      onValueChange={(value) => setGuest({...guest, group: value as GuestGroup})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um grupo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {guestGroups.map((group) => (
-                          <SelectItem key={group} value={group}>
-                            {group}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="companions">Acompanhantes</Label>
-                    <Input 
-                      id="companions" 
-                      name="companions"
-                      type="number" 
-                      min={0}
-                      value={guest.companions} 
-                      onChange={handleNumberInput} 
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Observações</Label>
-                    <Textarea 
-                      id="notes" 
-                      name="notes"
-                      value={guest.notes} 
-                      onChange={handleInputChange} 
-                      placeholder="Restrições alimentares, alergias, etc."
-                    />
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-leju-pink hover:bg-leju-pink/90"
-                    disabled={submitting}
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      "Confirmar Presença"
-                    )}
-                  </Button>
+                <form onSubmit={handleSubmit}>
+                  <GuestFormFields 
+                    guest={guest}
+                    guestGroups={guestGroups}
+                    handleInputChange={handleInputChange}
+                    handleNumberInput={handleNumberInput}
+                    setGuest={setGuest}
+                    submitting={submitting}
+                  />
                 </form>
               )
             ) : (
@@ -458,59 +363,12 @@ const PublicGuestForm = () => {
                 </div>
                 
                 <div className="rounded-md border overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead className="hidden md:table-cell">Grupo</TableHead>
-                        <TableHead className="text-center">Acompanhantes</TableHead>
-                        <TableHead className="text-center">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredGuests.length > 0 ? (
-                        filteredGuests.map((guestItem) => (
-                          <TableRow 
-                            key={guestItem.id} 
-                            className={guestItem.checked_in ? 'bg-green-50' : ''}
-                          >
-                            <TableCell className="font-medium">{guestItem.name}</TableCell>
-                            <TableCell className="hidden md:table-cell">{guestItem.group_type}</TableCell>
-                            <TableCell className="text-center">{guestItem.companions}</TableCell>
-                            <TableCell>
-                              <div className="flex justify-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditGuest(guestItem)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedGuestId(guestItem.id);
-                                    setIsDeleteGuestOpen(true);
-                                  }}
-                                  className="h-8 w-8 p-0 hover:text-red-600"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
-                            Nenhum convidado encontrado.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                  <GuestListTable 
+                    guests={filteredGuests}
+                    handleEditGuest={handleEditGuest}
+                    setSelectedGuestId={setSelectedGuestId}
+                    setIsDeleteGuestOpen={setIsDeleteGuestOpen}
+                  />
                 </div>
               </div>
             )}
@@ -522,107 +380,25 @@ const PublicGuestForm = () => {
           </CardFooter>
         </Card>
         
-        {/* Edit Guest Dialog */}
         <Dialog open={isEditGuestOpen} onOpenChange={setIsEditGuestOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Editar Convidado</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleUpdateGuest} className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Nome Completo *</Label>
-                <Input 
-                  id="edit-name" 
-                  name="name"
-                  value={guest.name} 
-                  onChange={handleInputChange} 
-                  placeholder="Nome do convidado"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-email">E-mail</Label>
-                <Input 
-                  id="edit-email" 
-                  name="email"
-                  type="email" 
-                  value={guest.email} 
-                  onChange={handleInputChange} 
-                  placeholder="email@exemplo.com"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-group">Grupo</Label>
-                <Select
-                  value={guest.group}
-                  onValueChange={(value) => setGuest({...guest, group: value as GuestGroup})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um grupo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {guestGroups.map((group) => (
-                      <SelectItem key={group} value={group}>
-                        {group}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-companions">Acompanhantes</Label>
-                <Input 
-                  id="edit-companions" 
-                  name="companions"
-                  type="number" 
-                  min={0}
-                  value={guest.companions} 
-                  onChange={handleNumberInput} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-notes">Observações</Label>
-                <Textarea 
-                  id="edit-notes" 
-                  name="notes"
-                  value={guest.notes} 
-                  onChange={handleInputChange} 
-                  placeholder="Restrições alimentares, alergias, etc."
-                />
-              </div>
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button 
-                  variant="outline" 
-                  type="button" 
-                  onClick={() => setIsEditGuestOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="bg-leju-pink hover:bg-leju-pink/90"
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    "Salvar"
-                  )}
-                </Button>
-              </div>
+            <form onSubmit={handleUpdateGuest}>
+              <GuestFormFields 
+                guest={guest}
+                guestGroups={guestGroups}
+                handleInputChange={handleInputChange}
+                handleNumberInput={handleNumberInput}
+                setGuest={setGuest}
+                submitting={submitting}
+                isEdit={true}
+              />
             </form>
           </DialogContent>
         </Dialog>
         
-        {/* Delete Guest Dialog */}
         <Dialog open={isDeleteGuestOpen} onOpenChange={setIsDeleteGuestOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
