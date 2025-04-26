@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,27 +6,24 @@ import { useNavigate } from 'react-router-dom';
 import { Event } from '@/types/event';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 export const EventCalendar = () => {
   const { events } = useEventContext();
   const navigate = useNavigate();
 
-  // Obter as datas de eventos para destacar no calendário
   const eventDates = events.map(event => new Date(event.date));
-  
-  // Encontrar eventos para uma data específica
+
   const getEventsForDate = (date: Date) => {
     return events.filter(event => 
       format(new Date(event.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
   };
 
-  // Função para navegar para o gerenciamento de um evento
   const handleSelectEvent = (event: Event) => {
     navigate(`/finances/${event.id}`);
   };
 
-  // Função de renderização personalizada de dias
   const renderDay = (date: Date) => {
     const dayEvents = getEventsForDate(date);
     const hasEvents = dayEvents.length > 0;
@@ -51,8 +47,6 @@ export const EventCalendar = () => {
     if (selectedEvents.length === 1) {
       handleSelectEvent(selectedEvents[0]);
     } else if (selectedEvents.length > 1) {
-      // Se houver múltiplos eventos, mostrar lista
-      // Aqui poderia ser implementado um popover com a lista
       selectedEvents.forEach(event => {
         toast.info(`${event.title} - ${format(new Date(event.date), 'HH:mm')}`, {
           action: {
