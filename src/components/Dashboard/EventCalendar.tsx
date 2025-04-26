@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +35,10 @@ export const EventCalendar = () => {
           {date.getDate()}
         </div>
         {hasEvents && (
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full bg-leju-pink"></div>
+          <div 
+            className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-3 h-3 rounded-full bg-leju-pink animate-pulse"
+            title={`${dayEvents.length} evento(s)`}
+          />
         )}
       </div>
     );
@@ -59,9 +63,9 @@ export const EventCalendar = () => {
   };
 
   return (
-    <Card className="bg-white shadow-sm border-leju-pink/20 mb-6">
+    <Card className="bg-white shadow-sm border-leju-pink/20 mb-6 w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-xl font-semibold flex items-center">
+        <CardTitle className="text-xl font-semibold flex items-center justify-center">
           Calendário de Eventos
         </CardTitle>
       </CardHeader>
@@ -74,15 +78,22 @@ export const EventCalendar = () => {
           onSelect={handleDateSelect}
           disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
           initialFocus
+          modifiers={{
+            events: eventDates
+          }}
+          modifiersClassNames={{
+            events: 'bg-leju-pink/10'
+          }}
+          customDayRenderer={renderDay}
         />
         {eventDates.length > 0 && (
           <div className="mt-4 space-y-2">
-            <h3 className="font-medium">Próximos eventos:</h3>
+            <h3 className="font-medium text-center">Próximos eventos:</h3>
             <div className="space-y-1">
               {events.slice(0, 3).map(event => (
                 <div 
                   key={event.id} 
-                  className="text-sm p-2 bg-slate-50 rounded-md cursor-pointer hover:bg-leju-pink/10"
+                  className="text-sm p-2 bg-slate-50 rounded-md cursor-pointer hover:bg-leju-pink/10 text-center"
                   onClick={() => handleSelectEvent(event)}
                 >
                   <span className="font-medium">{event.title}</span>
