@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Event } from '@/types/event';
-import { Calendar, MapPin, Clock, Link as LinkIcon, Share2, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Calendar, Home, Inbox, MapPin, Clock, Link as LinkIcon, Share2, Edit, Trash2, MoreVertical, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -193,13 +192,13 @@ export const EventList = ({ events, onEditEvent, onDeleteEvent, onSelectEvent, o
               </a>
             </div>
           </CardContent>
-          <CardFooter className="grid grid-cols-2 gap-2">
+          <CardFooter className="grid grid-cols-3 gap-2">
             <Button
               variant="outline"
               className="border-leju-pink text-leju-pink hover:bg-leju-pink/10"
               onClick={() => handleManageEvent(event)}
             >
-              Gerenciar Evento
+              Gerenciar
             </Button>
             <Button
               variant="outline"
@@ -207,6 +206,14 @@ export const EventList = ({ events, onEditEvent, onDeleteEvent, onSelectEvent, o
               onClick={() => navigate(`/finances/${event.id}`)}
             >
               Financeiro
+            </Button>
+            <Button
+              variant="outline"
+              className="border-emerald-500 text-emerald-500 hover:bg-emerald-500/10"
+              onClick={() => navigate(`/contract/${event.id}`)}
+            >
+              <FileText className="h-4 w-4 mr-1" />
+              Contrato
             </Button>
           </CardFooter>
         </Card>

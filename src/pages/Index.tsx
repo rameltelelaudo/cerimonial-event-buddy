@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
@@ -46,7 +45,8 @@ const Index = () => {
             
             {/* Calendário de Eventos */}
             <EventCalendar />
-            
+
+            {/* Cards with Events and Tasks */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="bg-white shadow-sm border-leju-pink/20 fade-in">
                 <CardHeader className="pb-2">

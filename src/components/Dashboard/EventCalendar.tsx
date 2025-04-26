@@ -63,50 +63,65 @@ export const EventCalendar = () => {
   };
 
   return (
-    <Card className="bg-white shadow-sm border-leju-pink/20 mb-6 w-full max-w-md mx-auto">
+    <Card className="bg-white shadow-md border-leju-pink/20 mb-6 w-full mx-auto">
       <CardHeader>
         <CardTitle className="text-xl font-semibold flex items-center justify-center">
           Calendário de Eventos
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Calendar 
-          mode="single"
-          className="rounded-md border"
-          locale={ptBR}
-          selected={undefined}
-          onSelect={handleDateSelect}
-          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-          initialFocus
-          modifiers={{
-            events: eventDates
-          }}
-          modifiersClassNames={{
-            events: 'bg-leju-pink/10'
-          }}
-          components={{
-            Day: ({ date, ...props }) => renderDay(date, props)
-          }}
-        />
-        {eventDates.length > 0 && (
-          <div className="mt-4 space-y-2">
-            <h3 className="font-medium text-center">Próximos eventos:</h3>
-            <div className="space-y-1">
-              {events.slice(0, 3).map(event => (
-                <div 
-                  key={event.id} 
-                  className="text-sm p-2 bg-slate-50 rounded-md cursor-pointer hover:bg-leju-pink/10 text-center"
-                  onClick={() => handleSelectEvent(event)}
-                >
-                  <span className="font-medium">{event.title}</span>
-                  <span className="text-muted-foreground block">
-                    {format(new Date(event.date), "dd 'de' MMMM', às' HH:mm'h'", { locale: ptBR })}
-                  </span>
-                </div>
-              ))}
-            </div>
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="lg:w-1/2">
+            <Calendar 
+              mode="single"
+              className="rounded-md border"
+              locale={ptBR}
+              selected={undefined}
+              onSelect={handleDateSelect}
+              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+              initialFocus
+              modifiers={{
+                events: eventDates
+              }}
+              modifiersClassNames={{
+                events: 'bg-leju-pink/10'
+              }}
+              components={{
+                Day: ({ date, ...props }) => renderDay(date, props)
+              }}
+            />
           </div>
-        )}
+          {eventDates.length > 0 ? (
+            <div className="lg:w-1/2">
+              <h3 className="font-medium mb-3 text-center lg:text-left">Próximos eventos:</h3>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                {events.slice(0, 5).map(event => (
+                  <div 
+                    key={event.id} 
+                    className="text-sm p-3 bg-slate-50 rounded-md cursor-pointer hover:bg-leju-pink/10 transition-all border border-transparent hover:border-leju-pink/20 hover:shadow-sm"
+                    onClick={() => handleSelectEvent(event)}
+                  >
+                    <span className="font-medium">{event.title}</span>
+                    <span className="text-muted-foreground block">
+                      {format(new Date(event.date), "dd 'de' MMMM', às' HH:mm'h'", { locale: ptBR })}
+                    </span>
+                    {event.location && (
+                      <span className="text-muted-foreground text-xs block mt-1 truncate">
+                        {event.location}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="lg:w-1/2 flex items-center justify-center">
+              <p className="text-muted-foreground text-center">
+                Não há eventos agendados.
+              </p>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

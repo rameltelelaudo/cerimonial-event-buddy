@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Event } from '@/types/event';
 import { format } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AddEventFormProps {
   onSubmit: (eventData: Omit<Event, 'id'>) => Promise<void>;
@@ -31,7 +32,9 @@ export const AddEventForm = ({
     time: initialData?.date ? format(new Date(initialData.date), 'HH:mm') : '',
     location: initialData?.location || '',
     description: initialData?.description || '',
-    type: initialData?.type || 'Casamento'
+    type: initialData?.type || 'Casamento',
+    contractorName: initialData?.contractorName || '',
+    contractorCPF: initialData?.contractorCPF || ''
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -65,7 +68,9 @@ export const AddEventForm = ({
         location: formData.location,
         description: formData.description,
         type: formData.type,
-        status: 'upcoming' as const
+        status: 'upcoming' as const,
+        contractorName: formData.contractorName,
+        contractorCPF: formData.contractorCPF
       };
       
       await onSubmit(eventData);
@@ -77,84 +82,123 @@ export const AddEventForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Nome do Evento *</Label>
-        <Input 
-          id="title" 
-          name="title"
-          value={formData.title}
-          onChange={handleInputChange}
-          placeholder="Casamento Ana e João"
-          required
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="type">Tipo de Evento</Label>
-        <Select
-          value={formData.type}
-          onValueChange={handleSelectChange}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o tipo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Casamento">Casamento</SelectItem>
-            <SelectItem value="Aniversário">Aniversário</SelectItem>
-            <SelectItem value="Corporativo">Corporativo</SelectItem>
-            <SelectItem value="Outro">Outro</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="date">Data *</Label>
-          <Input 
-            id="date" 
-            name="date"
-            type="date"
-            value={formData.date}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
+      <Tabs defaultValue="basic" className="w-full">
+        <TabsList className="w-full mb-4">
+          <TabsTrigger value="basic" className="flex-1">Informações Básicas</TabsTrigger>
+          <TabsTrigger value="contract" className="flex-1">Dados do Contrato</TabsTrigger>
+        </TabsList>
         
-        <div className="space-y-2">
-          <Label htmlFor="time">Hora</Label>
-          <Input 
-            id="time" 
-            name="time"
-            type="time"
-            value={formData.time}
-            onChange={handleInputChange}
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="location">Local *</Label>
-        <Input 
-          id="location" 
-          name="location"
-          value={formData.location}
-          onChange={handleInputChange}
-          placeholder="Nome e endereço do local"
-          required
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="description">Descrição</Label>
-        <Textarea 
-          id="description" 
-          name="description"
-          value={formData.description}
-          onChange={handleInputChange}
-          placeholder="Informações adicionais sobre o evento"
-          rows={3}
-        />
-      </div>
+        <TabsContent value="basic" className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Nome do Evento *</Label>
+            <Input 
+              id="title" 
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              placeholder="Casamento Ana e João"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="type">Tipo de Evento</Label>
+            <Select
+              value={formData.type}
+              onValueChange={handleSelectChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Casamento">Casamento</SelectItem>
+                <SelectItem value="Aniversário">Aniversário</SelectItem>
+                <SelectItem value="Corporativo">Corporativo</SelectItem>
+                <SelectItem value="Outro">Outro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date">Data *</Label>
+              <Input 
+                id="date" 
+                name="date"
+                type="date"
+                value={formData.date}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="time">Hora</Label>
+              <Input 
+                id="time" 
+                name="time"
+                type="time"
+                value={formData.time}
+                onChange={handleInputChange}
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="location">Local *</Label>
+            <Input 
+              id="location" 
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              placeholder="Nome e endereço do local"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea 
+              id="description" 
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Informações adicionais sobre o evento"
+              rows={3}
+            />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="contract" className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="contractorName">Nome do Contratante</Label>
+            <Input 
+              id="contractorName" 
+              name="contractorName"
+              value={formData.contractorName}
+              onChange={handleInputChange}
+              placeholder="Nome completo do contratante"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="contractorCPF">CPF do Contratante</Label>
+            <Input 
+              id="contractorCPF" 
+              name="contractorCPF"
+              value={formData.contractorCPF}
+              onChange={handleInputChange}
+              placeholder="000.000.000-00"
+            />
+          </div>
+          
+          <div className="p-4 bg-slate-50 rounded-md">
+            <p className="text-sm text-muted-foreground">
+              Estas informações serão utilizadas apenas para geração de contrato e não serão exibidas em outras partes do sistema.
+            </p>
+          </div>
+        </TabsContent>
+      </Tabs>
       
       <div className="flex justify-end space-x-2 pt-4">
         <Button 

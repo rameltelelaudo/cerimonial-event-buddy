@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Event } from '@/types/event';
 import { supabase } from '@/integrations/supabase/client';
@@ -73,7 +72,9 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           coverImage: event.cover_image,
           user_id: event.user_id,
           created_at: event.created_at,
-          updated_at: event.updated_at
+          updated_at: event.updated_at,
+          contractorName: event.contractor_name,
+          contractorCPF: event.contractor_cpf
         }));
 
         setEvents(transformedEvents);
@@ -114,7 +115,9 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           type: eventData.type || 'Casamento',
           status: validateEventStatus(eventData.status || 'upcoming'),
           cover_image: eventData.coverImage,
-          user_id: user.id
+          user_id: user.id,
+          contractor_name: eventData.contractorName,
+          contractor_cpf: eventData.contractorCPF
         })
         .select()
         .single();
@@ -135,7 +138,9 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         coverImage: data.cover_image,
         user_id: data.user_id,
         created_at: data.created_at,
-        updated_at: data.updated_at
+        updated_at: data.updated_at,
+        contractorName: data.contractor_name,
+        contractorCPF: data.contractor_cpf
       };
 
       // Update local state
@@ -166,6 +171,8 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (eventData.status !== undefined) updateData.status = validateEventStatus(eventData.status);
       if (eventData.coverImage !== undefined) updateData.cover_image = eventData.coverImage;
       if (eventData.date !== undefined) updateData.date = eventData.date.toISOString();
+      if (eventData.contractorName !== undefined) updateData.contractor_name = eventData.contractorName;
+      if (eventData.contractorCPF !== undefined) updateData.contractor_cpf = eventData.contractorCPF;
 
       const { error } = await supabase
         .from('leju_events')

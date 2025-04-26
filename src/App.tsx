@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -17,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import PublicGuestForm from "./pages/PublicGuestForm";
 import EventFinances from "./pages/EventFinances";
+import EventContract from "./pages/EventContract";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +53,7 @@ const AppRoutes = () => {
       <Route path="/invitations" element={<ProtectedRoute><Invitations /></ProtectedRoute>} />
       <Route path="/finances/:eventId" element={<ProtectedRoute><EventFinances /></ProtectedRoute>} />
       <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
+      <Route path="/contract/:eventId" element={<ProtectedRoute><EventContract /></ProtectedRoute>} />
       
       {/* Fallback route */}
       <Route path="*" element={<NotFound />} />
