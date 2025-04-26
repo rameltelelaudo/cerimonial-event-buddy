@@ -4,6 +4,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
 import { DashboardCards } from '@/components/Dashboard/DashboardCards';
+import { EventCalendar } from '@/components/Dashboard/EventCalendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Calendar, CheckSquare } from 'lucide-react';
@@ -42,6 +43,9 @@ const Index = () => {
           
           <div className="space-y-6">
             <DashboardCards />
+            
+            {/* Calendário de Eventos */}
+            <EventCalendar />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="bg-white shadow-sm border-leju-pink/20 fade-in">

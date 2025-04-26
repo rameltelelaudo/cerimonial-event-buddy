@@ -12,6 +12,7 @@ import { EventList } from '@/components/Events/EventList';
 import { AddEventForm } from '@/components/Events/AddEventForm';
 import { Event } from '@/types/event';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Events = () => {
   const isMobile = useIsMobile();
@@ -73,6 +74,14 @@ const Events = () => {
       toast.error("Erro ao excluir evento");
     }
   };
+
+  const handleImageUploaded = async (eventId: string, imageUrl: string) => {
+    // Atualizar o evento no contexto para refletir a nova imagem
+    const updatedEvent = events.find(e => e.id === eventId);
+    if (updatedEvent) {
+      updateEvent(eventId, { ...updatedEvent, coverImage: imageUrl });
+    }
+  };
   
   return (
     <div className="flex min-h-screen flex-col">
@@ -128,6 +137,7 @@ const Events = () => {
                 setDeleteDialogOpen(true);
               }}
               onSelectEvent={setSelectedEvent}
+              onImageUploaded={handleImageUploaded}
             />
           ) : (
             <div className="border rounded-lg p-6 bg-white fade-in mt-4">

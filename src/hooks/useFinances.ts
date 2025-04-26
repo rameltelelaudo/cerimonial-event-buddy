@@ -105,7 +105,7 @@ export const useFinances = (eventId: string | undefined) => {
           status: status,
           date: newFinance.date,
           event_id: eventId,
-          user_id: user.id // Add the user ID here to satisfy RLS policy
+          user_id: user.id
         })
         .select()
         .single();

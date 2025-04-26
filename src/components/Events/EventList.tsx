@@ -11,15 +11,17 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ImageUploadButton } from './ImageUploadButton';
 
 interface EventListProps {
   events: Event[];
   onEditEvent: (event: Event) => void;
   onDeleteEvent: (event: Event) => void;
   onSelectEvent: (event: Event) => void;
+  onImageUploaded?: (eventId: string, imageUrl: string) => void;
 }
 
-export const EventList = ({ events, onEditEvent, onDeleteEvent, onSelectEvent }: EventListProps) => {
+export const EventList = ({ events, onEditEvent, onDeleteEvent, onSelectEvent, onImageUploaded }: EventListProps) => {
   const navigate = useNavigate();
   const [showSharePopover, setShowSharePopover] = React.useState<string | null>(null);
   
@@ -59,6 +61,12 @@ export const EventList = ({ events, onEditEvent, onDeleteEvent, onSelectEvent }:
     navigate('/guest-list');
   };
 
+  const handleImageUploaded = (eventId: string, imageUrl: string) => {
+    if (onImageUploaded) {
+      onImageUploaded(eventId, imageUrl);
+    }
+  };
+
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {events.map((event) => (
@@ -67,9 +75,22 @@ export const EventList = ({ events, onEditEvent, onDeleteEvent, onSelectEvent }:
           className="overflow-hidden hover:shadow-md transition-shadow"
         >
           <div className="h-32 bg-leju-pink/20 flex items-center justify-center relative">
-            <Calendar className="h-12 w-12 text-leju-pink/60" />
+            {event.coverImage ? (
+              <img 
+                src={event.coverImage} 
+                alt={event.title} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Calendar className="h-12 w-12 text-leju-pink/60" />
+            )}
             
             <div className="absolute top-2 right-2 flex gap-2">
+              <ImageUploadButton 
+                eventId={event.id} 
+                onImageUploaded={(imageUrl) => handleImageUploaded(event.id, imageUrl)} 
+              />
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" className="h-8 w-8 rounded-full bg-white">
