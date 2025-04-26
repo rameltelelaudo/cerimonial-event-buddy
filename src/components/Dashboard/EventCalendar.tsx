@@ -25,14 +25,14 @@ export const EventCalendar = () => {
     navigate(`/finances/${event.id}`);
   };
 
-  const renderDay = (date: Date) => {
-    const dayEvents = getEventsForDate(date);
+  const renderDay = (day: Date, modifiers: any) => {
+    const dayEvents = getEventsForDate(day);
     const hasEvents = dayEvents.length > 0;
     
     return (
       <div className="relative w-full h-full">
         <div className={`flex items-center justify-center w-full h-full ${hasEvents ? 'font-bold text-leju-pink' : ''}`}>
-          {date.getDate()}
+          {day.getDate()}
         </div>
         {hasEvents && (
           <div 
@@ -84,7 +84,9 @@ export const EventCalendar = () => {
           modifiersClassNames={{
             events: 'bg-leju-pink/10'
           }}
-          customDayRenderer={renderDay}
+          components={{
+            Day: ({ date, ...props }) => renderDay(date, props)
+          }}
         />
         {eventDates.length > 0 && (
           <div className="mt-4 space-y-2">
