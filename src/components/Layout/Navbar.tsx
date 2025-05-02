@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Power } from 'lucide-react';
 
 export const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
 
   return (
     <div className="bg-white border-b shadow-sm h-16 flex items-center justify-between px-6">
@@ -34,7 +35,7 @@ export const Navbar = () => {
           <span className="text-sm text-gray-600">
             Olá, {user.email}
           </span>
-          <Button variant="outline" size="sm" onClick={logout}>
+          <Button variant="outline" size="sm" onClick={signOut}>
             <Power className="mr-2 h-4 w-4" />
             Sair
           </Button>

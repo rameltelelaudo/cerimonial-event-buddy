@@ -141,6 +141,8 @@ export type Database = {
       }
       leju_events: {
         Row: {
+          contractor_cpf: string | null
+          contractor_name: string | null
           cover_image: string | null
           created_at: string
           date: string
@@ -154,6 +156,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          contractor_cpf?: string | null
+          contractor_name?: string | null
           cover_image?: string | null
           created_at?: string
           date: string
@@ -167,6 +171,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          contractor_cpf?: string | null
+          contractor_name?: string | null
           cover_image?: string | null
           created_at?: string
           date?: string

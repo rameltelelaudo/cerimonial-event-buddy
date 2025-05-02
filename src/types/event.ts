@@ -11,7 +11,7 @@ export interface Event {
   user_id?: string;
   created_at?: string;
   updated_at?: string;
-  // Novos campos para contrato
+  // Campos para contrato
   contractorName?: string;
   contractorCPF?: string;
 }

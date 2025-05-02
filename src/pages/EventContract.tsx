@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEventContext } from '@/contexts/EventContext';
 import { EventContract as EventContractComponent } from '@/components/Events/EventContract';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Edit } from 'lucide-react';
 
 const EventContract = () => {
   const isMobile = useIsMobile();

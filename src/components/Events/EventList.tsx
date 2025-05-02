@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Event } from '@/types/event';
-import { Calendar, Home, Inbox, MapPin, Clock, Link as LinkIcon, Share2, Edit, Trash2, MoreVertical, FileText } from 'lucide-react';
+import { Calendar, MapPin, Clock, Link as LinkIcon, Share2, Edit, Trash2, MoreVertical, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
