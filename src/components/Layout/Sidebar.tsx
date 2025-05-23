@@ -1,8 +1,14 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, CheckSquare, ListChecks, Users, Send, Briefcase, LayoutDashboard, HelpCircle } from 'lucide-react';
+import { 
+  Calendar, CheckSquare, ListChecks, Users, Send, 
+  Briefcase, LayoutDashboard, HelpCircle, Bot
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Current version - can be updated programmatically
+const APP_VERSION = "1.0.0";
 
 const menuItems = [
   { 
@@ -48,6 +54,12 @@ const menuItems = [
     color: "text-sky-500" 
   },
   { 
+    name: 'I.A - Assistente', 
+    path: '/ai-assistant', 
+    icon: Bot,
+    color: "text-cyan-500" 
+  },
+  { 
     name: 'Ajuda', 
     path: '/help', 
     icon: HelpCircle,
@@ -63,11 +75,11 @@ export const Sidebar = () => {
       <div className="mb-6 mt-2 flex items-center">
         <img 
           src="https://i.ibb.co/G40sCgqs/images.jpg" 
-          alt="Leju App" 
+          alt="Vix Assistente" 
           className="h-8 w-auto mr-2"
         />
         <div>
-          <h2 className="text-xl font-bold text-leju-pink">Leju App</h2>
+          <h2 className="text-xl font-bold text-leju-pink">Vix Assistente</h2>
           <p className="text-sm text-muted-foreground">Gestão de Eventos</p>
         </div>
       </div>
@@ -95,7 +107,7 @@ export const Sidebar = () => {
       
       <div className="p-4 mt-auto border-t">
         <p className="text-xs text-muted-foreground">
-          Leju App v1.0.0
+          Vix Assistente v{APP_VERSION}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
           por <a href="https://ramelseg.com.br" target="_blank" rel="noopener noreferrer" className="text-leju-pink hover:underline">Ramel Tecnologia</a>

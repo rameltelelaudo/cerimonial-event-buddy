@@ -11,21 +11,24 @@ interface ChecklistTableProps {
 }
 
 export const ChecklistTable = ({ guests, onCheckIn, isMobile }: ChecklistTableProps) => {
+  // Sort guests alphabetically by name
+  const sortedGuests = [...guests].sort((a, b) => a.name.localeCompare(b.name));
+  
   if (isMobile) {
     return (
       <div className="p-4">
         <div className="mb-4 flex justify-between items-center">
           <h2 className="text-lg font-semibold">Convidados</h2>
           <div className="text-sm text-muted-foreground">
-            {guests.filter(g => g.checkedIn).length}/{guests.length} confirmados
+            {sortedGuests.filter(g => g.checkedIn).length}/{sortedGuests.length} confirmados
           </div>
         </div>
         
-        {guests.length === 0 ? (
+        {sortedGuests.length === 0 ? (
           <p className="text-center py-4 text-muted-foreground">Nenhum convidado encontrado</p>
         ) : (
           <div className="space-y-3">
-            {guests.map(guest => (
+            {sortedGuests.map(guest => (
               <ChecklistGuestItem 
                 key={guest.id}
                 id={guest.id}
@@ -54,12 +57,12 @@ export const ChecklistTable = ({ guests, onCheckIn, isMobile }: ChecklistTablePr
         </TableRow>
       </TableHeader>
       <TableBody>
-        {guests.length === 0 ? (
+        {sortedGuests.length === 0 ? (
           <TableRow>
             <TableCell colSpan={4} className="text-center">Nenhum convidado encontrado</TableCell>
           </TableRow>
         ) : (
-          guests.map(guest => (
+          sortedGuests.map(guest => (
             <ChecklistGuestItem 
               key={guest.id}
               id={guest.id}

@@ -18,6 +18,7 @@ import Login from "./pages/Login";
 import PublicGuestForm from "./pages/PublicGuestForm";
 import EventFinances from "./pages/EventFinances";
 import EventContract from "./pages/EventContract";
+import AIAssistant from "./pages/AIAssistant";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const AppRoutes = () => {
       <Route path="/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
       <Route path="/invitations" element={<ProtectedRoute><Invitations /></ProtectedRoute>} />
       <Route path="/finances/:eventId" element={<ProtectedRoute><EventFinances /></ProtectedRoute>} />
+      <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
       <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
       <Route path="/contract/:eventId" element={<ProtectedRoute><EventContract /></ProtectedRoute>} />
       
