@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Calendar, CheckSquare, ListChecks, Users, Send, Briefcase, LayoutDashboard, Bot, ExternalLink } from 'lucide-react';
+import { Calendar, CheckSquare, ListChecks, Users, Send, Briefcase, LayoutDashboard, Bot, ExternalLink, Receipt, FileText } from 'lucide-react';
 
 // Current version - matches the one in Sidebar.tsx
 const APP_VERSION = "1.0.1";
@@ -44,6 +44,16 @@ const systemFeatures = [
     name: 'Convites', 
     description: 'Envie convites digitais para seus convidados',
     icon: Send 
+  },
+  { 
+    name: 'Financeiro', 
+    description: 'Controle receitas e despesas do seu evento',
+    icon: Receipt 
+  },
+  { 
+    name: 'Contratos', 
+    description: 'Gere e personalize contratos para seus clientes',
+    icon: FileText 
   },
   { 
     name: 'Assistente IA', 

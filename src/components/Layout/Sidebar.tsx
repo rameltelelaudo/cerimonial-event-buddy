@@ -3,7 +3,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Calendar, CheckSquare, ListChecks, Users, Send, 
-  Briefcase, LayoutDashboard, HelpCircle, Bot
+  Briefcase, LayoutDashboard, HelpCircle, Bot, Receipt, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';

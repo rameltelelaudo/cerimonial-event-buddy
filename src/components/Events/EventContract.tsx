@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Event } from '@/types/event';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { FileText, Download, Printer } from 'lucide-react';
+import { FileText, Download, Printer, Edit, Save } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface EventContractProps {
   event: Event;
@@ -15,6 +17,9 @@ export const EventContract = ({ event }: EventContractProps) => {
   const today = new Date();
   const formattedToday = format(today, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const formattedEventDate = format(new Date(event.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  
+  const [editingCompanyName, setEditingCompanyName] = useState(false);
+  const [companyName, setCompanyName] = useState('Vix Assistente');
 
   const handlePrint = () => {
     window.print();
@@ -37,6 +42,11 @@ export const EventContract = ({ event }: EventContractProps) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const saveCompanyName = () => {
+    setEditingCompanyName(false);
+    toast.success('Nome da empresa salvo com sucesso!');
   };
 
   return (
@@ -73,8 +83,39 @@ export const EventContract = ({ event }: EventContractProps) => {
             Por este instrumento particular, de um lado:
           </p>
           
-          <p className="font-medium my-4">
-            <strong>CONTRATADA:</strong> Intelligent Assistance, empresa de prestação de serviços de assessoria e organização de eventos.
+          <p className="font-medium my-4 flex items-center">
+            <strong>CONTRATADA:</strong> 
+            <span className="ml-2 flex items-center">
+              {editingCompanyName ? (
+                <div className="flex items-center">
+                  <Input 
+                    value={companyName} 
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="max-w-xs ml-2"
+                  />
+                  <Button 
+                    onClick={saveCompanyName} 
+                    variant="ghost" 
+                    size="sm" 
+                    className="ml-2"
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <span className="ml-2">{companyName}</span>
+                  <Button 
+                    onClick={() => setEditingCompanyName(true)} 
+                    variant="ghost" 
+                    size="sm" 
+                    className="ml-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </span>, empresa de prestação de serviços de assessoria e organização de eventos.
           </p>
           
           <p className="font-medium my-4">
@@ -145,7 +186,7 @@ export const EventContract = ({ event }: EventContractProps) => {
                 <div className="border-t border-black pt-2 w-48">
                   CONTRATADA
                 </div>
-                <p className="text-xs">Intelligent Assistance</p>
+                <p className="text-xs">{companyName}</p>
               </div>
             </div>
           </div>
