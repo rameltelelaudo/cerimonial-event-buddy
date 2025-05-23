@@ -5,7 +5,7 @@ import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Bot, SendIcon, User } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,7 +15,7 @@ const AIAssistant = () => {
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([
     { 
       role: 'ai',
-      content: 'Olá! Sou a assistente virtual especialista em eventos. Como posso ajudar você hoje? Pode me perguntar sobre organização de eventos, etiqueta, casamentos, orçamentos e mais!'
+      content: 'Olá! Sou Mel, sua assistente virtual especialista em eventos. Como posso ajudar você hoje? Pode me perguntar sobre organização de eventos, etiqueta, casamentos, orçamentos e mais!'
     }
   ]);
   const [input, setInput] = useState('');
@@ -52,7 +52,7 @@ const AIAssistant = () => {
           messages: [
             {
               role: 'system',
-              content: 'Você é uma assistente virtual especialista em eventos, especialmente casamentos. Você deve ajudar as pessoas com dicas sobre organização de eventos, etiquetas em casamentos, orçamentos de eventos, ordem de cerimônias, contratação de fornecedores, e estratégias de precificação para assessoria de eventos. Responda em português do Brasil de forma profissional mas amigável.'
+              content: 'Você é Mel, uma assistente virtual especialista em eventos, especialmente casamentos. Você deve ajudar as pessoas com dicas sobre organização de eventos, etiquetas em casamentos, orçamentos de eventos, ordem de cerimônias, contratação de fornecedores, e estratégias de precificação para assessoria de eventos. Responda em português do Brasil de forma profissional mas amigável.'
             },
             ...messages.map(msg => ({
               role: msg.role === 'user' ? 'user' : 'assistant',
@@ -96,7 +96,13 @@ const AIAssistant = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="text-leju-pink h-6 w-6" />
-                Assistente de Eventos
+                <div className="flex items-center gap-2">
+                  <span>Mel</span>
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src="/lovable-uploads/c9f269ab-f770-4b9a-8dff-9ff8def43236.png" alt="Mel" />
+                    <AvatarFallback>MB</AvatarFallback>
+                  </Avatar>
+                </div>
               </CardTitle>
               <CardDescription>
                 Tirando dúvidas sobre organização, etiqueta, orçamentos e tudo sobre eventos
@@ -127,8 +133,13 @@ const AIAssistant = () => {
                           </>
                         ) : (
                           <>
-                            <Bot className="h-4 w-4" />
-                            <span className="font-medium">Assistente</span>
+                            <div className="flex items-center gap-1">
+                              <Avatar className="h-5 w-5">
+                                <AvatarImage src="/lovable-uploads/c9f269ab-f770-4b9a-8dff-9ff8def43236.png" alt="Mel" />
+                                <AvatarFallback>M</AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium">Mel</span>
+                            </div>
                           </>
                         )}
                       </div>
@@ -140,8 +151,11 @@ const AIAssistant = () => {
                   <div className="flex justify-start">
                     <div className="max-w-[80%] sm:max-w-[70%] bg-gray-100 rounded-lg p-4 rounded-tl-none animate-pulse">
                       <div className="flex items-center gap-2">
-                        <Bot className="h-4 w-4" />
-                        <span className="font-medium">Assistente</span>
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src="/lovable-uploads/c9f269ab-f770-4b9a-8dff-9ff8def43236.png" alt="Mel" />
+                          <AvatarFallback>M</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">Mel</span>
                       </div>
                       <p>Pensando...</p>
                     </div>

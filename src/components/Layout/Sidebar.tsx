@@ -6,9 +6,10 @@ import {
   Briefcase, LayoutDashboard, HelpCircle, Bot
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 // Current version - can be updated programmatically
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.0.1";
 
 const menuItems = [
   { 
@@ -57,7 +58,9 @@ const menuItems = [
     name: 'I.A - Assistente', 
     path: '/ai-assistant', 
     icon: Bot,
-    color: "text-cyan-500" 
+    color: "text-cyan-500",
+    image: "/lovable-uploads/c9f269ab-f770-4b9a-8dff-9ff8def43236.png",
+    imageName: "Mel"
   },
   { 
     name: 'Ajuda', 
@@ -98,7 +101,16 @@ export const Sidebar = () => {
                   : "hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground"
               )}
             >
-              <item.icon className={cn("h-5 w-5 mr-3", isActive ? "text-leju-pink" : item.color)} />
+              {item.image ? (
+                <div className="mr-3 flex items-center">
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={item.image} alt={item.imageName || item.name} />
+                    <AvatarFallback>{item.imageName?.[0] || item.name[0]}</AvatarFallback>
+                  </Avatar>
+                </div>
+              ) : (
+                <item.icon className={cn("h-5 w-5 mr-3", isActive ? "text-leju-pink" : item.color)} />
+              )}
               {item.name}
             </Link>
           );
