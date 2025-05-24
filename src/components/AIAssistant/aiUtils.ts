@@ -69,6 +69,47 @@ Resumo financeiro:
   `;
 };
 
+// New function to generate context from casamentos.com.br
+export const generateVenueContextForEspiritoSanto = (): string => {
+  return `
+Informações sobre venues de casamento no Espírito Santo:
+
+Principais regiões para casamentos:
+- Vitória - Capital com belas praias e opções urbanas elegantes
+- Vila Velha - Vista para o mar e praias paradisíacas
+- Serra - Fazendas e espaços rurais com muito verde
+- Guarapari - Praias e resorts para casamentos à beira-mar
+- Domingos Martins - Área montanhosa com clima ameno e paisagens deslumbrantes
+
+Tipos de venues mais populares no ES:
+- Casas de festas com vista para o mar
+- Fazendas históricas em regiões montanhosas
+- Sítios e chácaras com grandes áreas verdes
+- Hotéis e resorts à beira-mar
+- Restaurantes com vista panorâmica
+
+Características típicas de venues no ES:
+- Capacidade média entre 100-300 convidados
+- Preços variam de R$8.000 a R$30.000 dependendo da temporada e localização
+- Muitas oferecem pacotes completos com decoração, buffet e DJ
+- Melhor época para casamentos ao ar livre: entre abril e setembro
+- Lugares mais valorizados possuem vista para o mar ou montanhas
+
+Fornecedores locais populares:
+- Decoradores especializados em temas praianos e tropicais
+- Buffets com foco em frutos do mar e comida capixaba
+- Fotógrafos especializados em captar a luz natural das praias
+- Músicos e bandas regionais
+
+Dicas específicas para casamentos no ES:
+- Verificar a necessidade de geradores em locais mais afastados
+- Considerar o transporte dos convidados em venues distantes do centro
+- Atenção à temporada de chuvas entre outubro e janeiro
+- Aproveitar ingredientes locais como a moqueca capixaba, camarões e torta capixaba nos cardápios
+- Considerar o clima úmido para escolha de flores e decorações
+  `;
+};
+
 export const callAIAssistant = async (
   userMessage: string,
   conversationHistory: string,
@@ -78,6 +119,9 @@ export const callAIAssistant = async (
   financesContext: string
 ): Promise<string> => {
   try {
+    // Add the venue information to the context
+    const venueContext = generateVenueContextForEspiritoSanto();
+    
     // Using Google Gemini API
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyDivMmnk9vwG08V_qQArvX6d_x46oJZrh0', {
       method: 'POST',
@@ -102,6 +146,7 @@ ${eventsContext}
 ${guestsContext}
 ${tasksContext}
 ${financesContext}
+${venueContext}
 
 Você conhece o sistema Vix Assistente, mas só deve mencioná-lo quando for relevante para a pergunta ou quando o usuário perguntar especificamente. Quando for relevante, você pode orientar sobre como usar suas funcionalidades:
 
@@ -149,3 +194,4 @@ Responda a seguinte mensagem em português do Brasil de forma profissional mas a
     throw error;
   }
 };
+
