@@ -9,13 +9,15 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Bot, SendIcon, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { useEventContext } from '@/contexts/EventContext';
 
 const AIAssistant = () => {
   const isMobile = useIsMobile();
+  const { events } = useEventContext();
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([
     { 
       role: 'ai',
-      content: 'Olá! Sou Mel, sua assistente virtual especialista em eventos. Como posso ajudar você hoje? Pode me perguntar sobre organização de eventos, etiqueta, casamentos, orçamentos e mais!'
+      content: 'Olá! 👋 Sou Mel, sua assistente virtual especialista em eventos. Como posso ajudar você hoje? Pode me perguntar sobre organização de eventos, etiqueta, casamentos, orçamentos e mais!'
     }
   ]);
   const [input, setInput] = useState('');
@@ -30,6 +32,20 @@ const AIAssistant = () => {
     scrollToBottom();
   }, [messages]);
 
+  const getEventsContext = () => {
+    if (!events || events.length === 0) return "";
+    
+    // Extract basic information about upcoming events
+    const eventsInfo = events.slice(0, 3).map(event => {
+      return `- Evento: ${event.title}, Data: ${new Date(event.date).toLocaleDateString('pt-BR')}, Local: ${event.location || "Não especificado"}`;
+    }).join('\n');
+    
+    return `
+Informações sobre os próximos eventos no sistema:
+${eventsInfo}
+    `;
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -41,20 +57,29 @@ const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      // Using Google Gemini API instead of Groq
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyDivMmnk9vwG08V_qQArvX6d_x46oJZrh0', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer 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',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama3-8b-8192',
-          messages: [
+          contents: [
             {
-              role: 'system',
-              content: `Você é Mel, uma assistente virtual especialista em eventos, especialmente casamentos. Você deve ajudar as pessoas com dicas sobre organização de eventos, etiquetas em casamentos, orçamentos de eventos, ordem de cerimônias, contratação de fornecedores, e estratégias de precificação para assessoria de eventos.
+              role: "user",
+              parts: [
+                {
+                  text: `Você é Mel, uma assistente virtual especialista em eventos, especialmente casamentos no Brasil. 
 
-Você conhece o sistema Vix Assistente e deve orientar os usuários sobre como usar suas funcionalidades para organizar eventos de forma eficiente:
+Você deve usar exemplos e contextos brasileiros nas suas respostas quando possível, mencionando locais, tradições e práticas comuns no Brasil.
+
+Você pode usar emojis ocasionalmente para tornar suas respostas mais amigáveis e envolventes, mas sem exageros.
+
+Você pode ajudar as pessoas com dicas sobre organização de eventos, etiquetas em casamentos, orçamentos de eventos, ordem de cerimônias, contratação de fornecedores, e estratégias de precificação para assessoria de eventos.
+
+${getEventsContext()}
+
+Você conhece o sistema Vix Assistente, mas só deve mencioná-lo quando for relevante para a pergunta ou quando o usuário perguntar especificamente. Quando for relevante, você pode orientar sobre como usar suas funcionalidades:
 
 1. Dashboard - Visualização geral de todos os eventos e tarefas pendentes
 2. Eventos - Cadastro e gerenciamento completo de eventos, com detalhes, datas, locais
@@ -66,18 +91,15 @@ Você conhece o sistema Vix Assistente e deve orientar os usuários sobre como u
 8. Financeiro - Controle de receitas e despesas do evento, com relatórios e balanços
 9. Contratos - Geração e edição de contratos personalizados para os clientes
 
-Quando der orientações sobre organização de eventos, sempre sugira como usar essas funcionalidades do Vix Assistente para facilitar o trabalho da assessora ou assessor.
-
-Responda em português do Brasil de forma profissional mas amigável.`
-            },
-            ...messages.map(msg => ({
-              role: msg.role === 'user' ? 'user' : 'assistant',
-              content: msg.content
-            })),
-            { role: 'user', content: userMessage }
+Responda a seguinte mensagem em português do Brasil de forma profissional mas amigável: ${userMessage}`
+                }
+              ]
+            }
           ],
-          temperature: 0.7,
-          max_tokens: 800,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 800,
+          }
         }),
       });
 
@@ -86,7 +108,13 @@ Responda em português do Brasil de forma profissional mas amigável.`
       }
 
       const data = await response.json();
-      const aiResponse = data.choices[0].message.content;
+      let aiResponse = "";
+      
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        aiResponse = data.candidates[0].content.parts[0].text;
+      } else {
+        throw new Error('Formato de resposta inválido');
+      }
 
       setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
     } catch (error) {
