@@ -7,13 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Bot, SendIcon, User } from 'lucide-react';
+import { Bot, SendIcon, User, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEventContext } from '@/contexts/EventContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Finance } from '@/types/finance';
+import { Guest } from '@/types/guest';
+import { Task } from '@/types/task';
 
 const AIAssistant = () => {
   const isMobile = useIsMobile();
-  const { events } = useEventContext();
+  const { events, selectedEvent } = useEventContext();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([
     { 
       role: 'ai',
@@ -22,6 +28,10 @@ const AIAssistant = () => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [guestData, setGuestData] = useState<Guest[]>([]);
+  const [tasksData, setTasksData] = useState<Task[]>([]);
+  const [financeData, setFinanceData] = useState<Finance[]>([]);
+  const [conversationHistory, setConversationHistory] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -30,6 +40,93 @@ const AIAssistant = () => {
 
   useEffect(() => {
     scrollToBottom();
+  }, [messages]);
+
+  // Fetch additional data for context
+  useEffect(() => {
+    const fetchAdditionalData = async () => {
+      if (!user) return;
+      
+      try {
+        // Fetch guest data
+        const { data: guests, error: guestsError } = await supabase
+          .from('leju_guests')
+          .select('*')
+          .eq('user_id', user.id)
+          .limit(20);
+          
+        if (!guestsError && guests) {
+          setGuestData(guests.map(g => ({
+            id: g.id,
+            name: g.name,
+            email: g.email || '',
+            group: g.group_type as any,
+            companions: g.companions,
+            notes: g.notes || '',
+            checkedIn: g.checked_in,
+            checkInTime: g.check_in_time ? new Date(g.check_in_time) : undefined
+          })));
+        }
+        
+        // Fetch tasks data
+        const { data: tasks, error: tasksError } = await supabase
+          .from('leju_tasks')
+          .select('*')
+          .eq('user_id', user.id)
+          .limit(20);
+          
+        if (!tasksError && tasks) {
+          setTasksData(tasks.map(t => ({
+            id: t.id,
+            title: t.title,
+            description: t.description || '',
+            dueDate: new Date(t.due_date),
+            status: t.status as any,
+            priority: t.priority as any,
+            eventId: t.event_id,
+            assignedTo: t.assigned_to
+          })));
+        }
+        
+        // Fetch finance data
+        const { data: finances, error: financesError } = await supabase
+          .from('leju_finances')
+          .select('*')
+          .eq('user_id', user.id)
+          .limit(20);
+          
+        if (!financesError && finances) {
+          setFinanceData(finances.map(f => ({
+            id: f.id,
+            description: f.description,
+            amount: Number(f.amount),
+            category: f.category,
+            type: f.type as 'receita' | 'despesa',
+            status: f.status as 'pago' | 'pendente' | 'cancelado',
+            date: new Date(f.date),
+            eventId: f.event_id,
+            createdAt: new Date(f.created_at)
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching additional data:', error);
+      }
+    };
+    
+    fetchAdditionalData();
+  }, [user]);
+
+  // Update conversation history when messages change
+  useEffect(() => {
+    if (messages.length > 1) {
+      // Extract the last few messages for context
+      const recentMessages = messages.slice(-5);
+      const historyText = recentMessages.map(msg => 
+        `${msg.role === 'user' ? 'Usuário' : 'Mel'}: ${msg.content}`
+      ).join('\n\n');
+      
+      setConversationHistory(historyText);
+    }
   }, [messages]);
 
   const getEventsContext = () => {
@@ -43,6 +140,57 @@ const AIAssistant = () => {
     return `
 Informações sobre os próximos eventos no sistema:
 ${eventsInfo}
+    `;
+  };
+
+  const getGuestsContext = () => {
+    if (!guestData || guestData.length === 0) return "";
+    
+    // Extract guest information
+    const guestsInfo = guestData.slice(0, 5).map(guest => {
+      return `- Convidado: ${guest.name}, Grupo: ${guest.group}, Acompanhantes: ${guest.companions}, Check-in: ${guest.checkedIn ? 'Sim' : 'Não'}`;
+    }).join('\n');
+    
+    return `
+Informações sobre alguns convidados:
+${guestsInfo}
+    `;
+  };
+
+  const getTasksContext = () => {
+    if (!tasksData || tasksData.length === 0) return "";
+    
+    // Extract tasks information
+    const tasksInfo = tasksData.slice(0, 5).map(task => {
+      return `- Tarefa: ${task.title}, Prioridade: ${task.priority}, Status: ${task.status}, Data: ${task.dueDate.toLocaleDateString('pt-BR')}`;
+    }).join('\n');
+    
+    return `
+Informações sobre algumas tarefas:
+${tasksInfo}
+    `;
+  };
+
+  const getFinancesContext = () => {
+    if (!financeData || financeData.length === 0) return "";
+    
+    // Extract finance information
+    const financesInfo = financeData.slice(0, 5).map(finance => {
+      return `- ${finance.type === 'receita' ? 'Receita' : 'Despesa'}: ${finance.description}, Valor: R$ ${finance.amount.toFixed(2)}, Status: ${finance.status}, Data: ${new Date(finance.date).toLocaleDateString('pt-BR')}`;
+    }).join('\n');
+    
+    const totalReceitas = financeData.filter(item => item.type === 'receita').reduce((sum, item) => sum + item.amount, 0);
+    const totalDespesas = financeData.filter(item => item.type === 'despesa').reduce((sum, item) => sum + item.amount, 0);
+    const saldoTotal = totalReceitas - totalDespesas;
+    
+    return `
+Informações financeiras:
+${financesInfo}
+
+Resumo financeiro:
+- Total de receitas: R$ ${totalReceitas.toFixed(2)}
+- Total de despesas: R$ ${totalDespesas.toFixed(2)}
+- Saldo total: R$ ${saldoTotal.toFixed(2)}
     `;
   };
 
@@ -78,6 +226,9 @@ Você pode usar emojis ocasionalmente para tornar suas respostas mais amigáveis
 Você pode ajudar as pessoas com dicas sobre organização de eventos, etiquetas em casamentos, orçamentos de eventos, ordem de cerimônias, contratação de fornecedores, e estratégias de precificação para assessoria de eventos.
 
 ${getEventsContext()}
+${getGuestsContext()}
+${getTasksContext()}
+${getFinancesContext()}
 
 Você conhece o sistema Vix Assistente, mas só deve mencioná-lo quando for relevante para a pergunta ou quando o usuário perguntar especificamente. Quando for relevante, você pode orientar sobre como usar suas funcionalidades:
 
@@ -90,6 +241,9 @@ Você conhece o sistema Vix Assistente, mas só deve mencioná-lo quando for rel
 7. Convites - Envio de convites digitais para os convidados
 8. Financeiro - Controle de receitas e despesas do evento, com relatórios e balanços
 9. Contratos - Geração e edição de contratos personalizados para os clientes
+
+Histórico da conversa atual:
+${conversationHistory}
 
 Responda a seguinte mensagem em português do Brasil de forma profissional mas amigável: ${userMessage}`
                 }
