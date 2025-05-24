@@ -34,6 +34,7 @@ export const useAIAssistant = () => {
   const [tasksData, setTasksData] = useState<Task[]>([]);
   const [financeData, setFinanceData] = useState<Finance[]>([]);
   const [conversationHistory, setConversationHistory] = useState<string>('');
+  const [retryCount, setRetryCount] = useState(0);
 
   // Update conversation history when messages change
   useEffect(() => {
@@ -123,6 +124,8 @@ export const useAIAssistant = () => {
   }, [user]);
 
   const sendMessage = async (userMessage: string) => {
+    if (!userMessage.trim()) return;
+    
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
@@ -142,10 +145,28 @@ export const useAIAssistant = () => {
       );
 
       setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
+      setRetryCount(0); // Reset retry count on success
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Handle retry logic
+      if (retryCount < 2) { // Allow up to 2 retries
+        setRetryCount(prev => prev + 1);
+        toast.error('Tentando novamente...');
+        
+        // Wait a moment before retrying
+        setTimeout(() => {
+          sendMessage(userMessage);
+        }, 2000);
+        return;
+      }
+      
       toast.error('Não foi possível obter resposta do assistente. Tente novamente mais tarde.');
-      setMessages(prev => [...prev, { role: 'ai', content: 'Desculpe, tive um problema ao processar sua pergunta. Poderia tentar novamente?' }]);
+      setMessages(prev => [...prev, { 
+        role: 'ai', 
+        content: 'Desculpe, tive um problema ao processar sua pergunta. Poderia tentar novamente em alguns instantes?' 
+      }]);
+      setRetryCount(0); // Reset retry count
     } finally {
       setIsLoading(false);
     }

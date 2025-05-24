@@ -69,7 +69,7 @@ Resumo financeiro:
   `;
 };
 
-// New function to generate context from casamentos.com.br
+// Function to generate context about wedding venues in Espírito Santo
 export const generateVenueContextForEspiritoSanto = (): string => {
   return `
 Informações sobre venues de casamento no Espírito Santo:
@@ -122,7 +122,10 @@ export const callAIAssistant = async (
     // Add the venue information to the context
     const venueContext = generateVenueContextForEspiritoSanto();
     
-    // Using Google Gemini API
+    // Using Google Gemini API with improved error handling and timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyDivMmnk9vwG08V_qQArvX6d_x46oJZrh0', {
       method: 'POST',
       headers: {
@@ -173,25 +176,32 @@ Responda a seguinte mensagem em português do Brasil de forma profissional mas a
           maxOutputTokens: 800,
         }
       }),
+      signal: controller.signal
     });
-
+    
+    clearTimeout(timeoutId); // Clear the timeout once we have a response
+    
     if (!response.ok) {
-      throw new Error('Falha na comunicação com o assistente');
+      console.error('API response error:', response.status, response.statusText);
+      throw new Error(`Falha na comunicação com o assistente: ${response.status}`);
     }
 
     const data = await response.json();
     let aiResponse = "";
     
-    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+    if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
       aiResponse = data.candidates[0].content.parts[0].text;
     } else {
+      console.error('Invalid response structure:', JSON.stringify(data));
       throw new Error('Formato de resposta inválido');
     }
 
     return aiResponse;
   } catch (error) {
     console.error('Error calling AI assistant:', error);
-    throw error;
+    if (error.name === 'AbortError') {
+      return "Desculpe pela demora. Parece que estou tendo problemas para processar sua pergunta no momento. Você poderia tentar novamente?";
+    }
+    return "Desculpe, tive um problema técnico. Poderia reformular sua pergunta ou tentar novamente mais tarde?";
   }
 };
-
