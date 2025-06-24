@@ -15,9 +15,10 @@ import { ptBR } from 'date-fns/locale';
 import { useEventContext } from '@/contexts/EventContext';
 import { Guest, GuestGroup } from '@/types/guest';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, UserPlus } from 'lucide-react';
+import { ArrowLeft, UserPlus, Upload, Download } from 'lucide-react';
 import { GuestTable } from '@/components/GuestList/GuestTable';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 const guestGroups: GuestGroup[] = [
   "Família",
@@ -39,6 +40,7 @@ const GuestList = () => {
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
   const [isEditGuestOpen, setIsEditGuestOpen] = useState(false);
   const [isDeleteGuestOpen, setIsDeleteGuestOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
   
   const [newGuest, setNewGuest] = useState({
@@ -51,8 +53,9 @@ const GuestList = () => {
   
   useEffect(() => {
     if (!selectedEvent) {
-      toast.info("Selecione um evento primeiro");
+      console.log('No selected event, redirecting to events page');
       navigate('/events');
+      return;
     }
   }, [selectedEvent, navigate]);
   
@@ -286,6 +289,88 @@ const GuestList = () => {
       toast.error('Erro ao confirmar check-in: ' + error.message);
     }
   };
+
+  const downloadTemplate = () => {
+    const template = [
+      {
+        Nome: 'João Silva',
+        Email: 'joao@exemplo.com',
+        Grupo: 'Família',
+        Acompanhantes: 1,
+        Observações: 'Mesa principal'
+      },
+      {
+        Nome: 'Maria Santos',
+        Email: 'maria@exemplo.com', 
+        Grupo: 'Amigos',
+        Acompanhantes: 0,
+        Observações: ''
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Convidados');
+    XLSX.writeFile(workbook, 'template_convidados.xlsx');
+    toast.success('Template baixado com sucesso!');
+  };
+
+  const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedEvent) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      const validGuests = jsonData
+        .filter((row: any) => row.Nome && row.Nome.trim())
+        .map((row: any) => ({
+          event_id: selectedEvent.id,
+          name: row.Nome.trim(),
+          email: row.Email?.trim() || null,
+          group_type: guestGroups.includes(row.Grupo) ? row.Grupo : 'Outros',
+          companions: parseInt(row.Acompanhantes) || 0,
+          notes: row.Observações?.trim() || null,
+          checked_in: false,
+          user_id: selectedEvent.user_id
+        }));
+
+      if (validGuests.length === 0) {
+        toast.error('Nenhum convidado válido encontrado no arquivo');
+        return;
+      }
+
+      const { data: insertedGuests, error } = await supabase
+        .from('leju_guests')
+        .insert(validGuests)
+        .select();
+
+      if (error) throw error;
+
+      const newGuests: Guest[] = insertedGuests.map(g => ({
+        id: g.id,
+        name: g.name,
+        email: g.email || undefined,
+        group: g.group_type as GuestGroup,
+        companions: g.companions,
+        notes: g.notes || undefined,
+        checkedIn: false
+      }));
+
+      setGuests([...newGuests, ...guests]);
+      toast.success(`${validGuests.length} convidados importados com sucesso!`);
+      setIsBulkUploadOpen(false);
+    } catch (error: any) {
+      console.error('Error uploading guests:', error);
+      toast.error('Erro ao importar convidados: ' + error.message);
+    }
+
+    // Reset input
+    event.target.value = '';
+  };
   
   if (!selectedEvent) {
     return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
@@ -326,102 +411,139 @@ const GuestList = () => {
                 </p>
               </div>
               
-              <Dialog open={isAddGuestOpen} onOpenChange={setIsAddGuestOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-leju-pink hover:bg-leju-pink/90">
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Adicionar Convidado
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Adicionar Novo Convidado</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleAddGuest} className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nome Completo *</Label>
-                      <Input 
-                        id="name" 
-                        name="name"
-                        value={newGuest.name} 
-                        onChange={handleInputChange} 
-                        placeholder="Nome do convidado"
-                        required
-                      />
+              <div className="flex gap-2">
+                <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Importar Excel
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Importar Convidados em Massa</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Button onClick={downloadTemplate} variant="outline" className="w-full">
+                          <Download className="mr-2 h-4 w-4" />
+                          Baixar Template Excel
+                        </Button>
+                        <p className="text-sm text-gray-600 mt-2">
+                          Baixe o template, preencha com os dados dos convidados e faça upload do arquivo.
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor="bulk-upload">Selecionar Arquivo Excel</Label>
+                        <Input
+                          id="bulk-upload"
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={handleBulkUpload}
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="email">E-mail</Label>
-                      <Input 
-                        id="email" 
-                        name="email"
-                        type="email" 
-                        value={newGuest.email} 
-                        onChange={handleInputChange} 
-                        placeholder="email@exemplo.com"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="group">Grupo</Label>
-                      <Select
-                        value={newGuest.group}
-                        onValueChange={(value) => setNewGuest({...newGuest, group: value as GuestGroup})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um grupo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {guestGroups.map((group) => (
-                            <SelectItem key={group} value={group}>
-                              {group}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="companions">Acompanhantes</Label>
-                      <Input 
-                        id="companions" 
-                        name="companions"
-                        type="number" 
-                        min={0}
-                        value={newGuest.companions} 
-                        onChange={handleNumberInput} 
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="notes">Observações</Label>
-                      <Textarea 
-                        id="notes" 
-                        name="notes"
-                        value={newGuest.notes} 
-                        onChange={handleInputChange} 
-                        placeholder="Mesa, restrição alimentar, etc."
-                      />
-                    </div>
-                    
-                    <div className="flex justify-end space-x-2 pt-4">
-                      <Button 
-                        variant="outline" 
-                        type="button" 
-                        onClick={() => setIsAddGuestOpen(false)}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        className="bg-leju-pink hover:bg-leju-pink/90"
-                      >
-                        Adicionar
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={isAddGuestOpen} onOpenChange={setIsAddGuestOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-leju-pink hover:bg-leju-pink/90">
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Adicionar Convidado
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Adicionar Novo Convidado</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleAddGuest} className="space-y-4 pt-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Nome Completo *</Label>
+                        <Input 
+                          id="name" 
+                          name="name"
+                          value={newGuest.name} 
+                          onChange={handleInputChange} 
+                          placeholder="Nome do convidado"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="email">E-mail</Label>
+                        <Input 
+                          id="email" 
+                          name="email"
+                          type="email" 
+                          value={newGuest.email} 
+                          onChange={handleInputChange} 
+                          placeholder="email@exemplo.com"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="group">Grupo</Label>
+                        <Select
+                          value={newGuest.group}
+                          onValueChange={(value) => setNewGuest({...newGuest, group: value as GuestGroup})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um grupo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {guestGroups.map((group) => (
+                              <SelectItem key={group} value={group}>
+                                {group}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="companions">Acompanhantes</Label>
+                        <Input 
+                          id="companions" 
+                          name="companions"
+                          type="number" 
+                          min={0}
+                          value={newGuest.companions} 
+                          onChange={handleNumberInput} 
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="notes">Observações</Label>
+                        <Textarea 
+                          id="notes" 
+                          name="notes"
+                          value={newGuest.notes} 
+                          onChange={handleInputChange} 
+                          placeholder="Mesa, restrição alimentar, etc."
+                        />
+                      </div>
+                      
+                      <div className="flex justify-end space-x-2 pt-4">
+                        <Button 
+                          variant="outline" 
+                          type="button" 
+                          onClick={() => setIsAddGuestOpen(false)}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          className="bg-leju-pink hover:bg-leju-pink/90"
+                        >
+                          Adicionar
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
           
