@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -47,12 +46,14 @@ const PublicGuestForm = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       if (!eventId) {
+        console.log('No eventId provided');
         setLoading(false);
         return;
       }
       
       try {
-        // Modificado para usar a tabela leju_events e remover a restrição de usuário
+        console.log('Fetching event with ID:', eventId);
+        
         const { data, error } = await supabase
           .from('leju_events')
           .select('*')
@@ -71,12 +72,13 @@ const PublicGuestForm = () => {
             date: new Date(data.date)
           });
           
-          fetchGuests(data.id);
+          await fetchGuests(data.id);
         } else {
           console.log('No event data found for ID:', eventId);
         }
       } catch (error) {
         console.error('Error fetching event:', error);
+        toast.error('Erro ao carregar evento');
       } finally {
         setLoading(false);
       }
@@ -87,7 +89,8 @@ const PublicGuestForm = () => {
   
   const fetchGuests = async (eventId: string) => {
     try {
-      // Modificado para usar a tabela leju_guests e remover a restrição de usuário
+      console.log('Fetching guests for event:', eventId);
+      
       const { data, error } = await supabase
         .from('leju_guests')
         .select('*')
@@ -100,6 +103,7 @@ const PublicGuestForm = () => {
       }
       
       if (data) {
+        console.log('Guests loaded:', data.length);
         setGuests(data);
       }
     } catch (error) {
@@ -144,7 +148,6 @@ const PublicGuestForm = () => {
           companions: guest.companions,
           notes: guest.notes.trim() || null,
           checked_in: false,
-          // Mantem o user_id do evento para manter a referência
           user_id: event.user_id
         })
         .select();
@@ -166,7 +169,7 @@ const PublicGuestForm = () => {
       toast.success("Confirmação recebida com sucesso!");
       
       if (eventId) {
-        fetchGuests(eventId);
+        await fetchGuests(eventId);
       }
       
       setTimeout(() => {
@@ -221,7 +224,7 @@ const PublicGuestForm = () => {
       toast.success('Convidado atualizado com sucesso');
       
       if (eventId) {
-        fetchGuests(eventId);
+        await fetchGuests(eventId);
       }
       
       setIsEditGuestOpen(false);
@@ -258,7 +261,7 @@ const PublicGuestForm = () => {
       toast.success('Convidado removido com sucesso');
       
       if (eventId) {
-        fetchGuests(eventId);
+        await fetchGuests(eventId);
       }
       
       setSelectedGuestId(null);

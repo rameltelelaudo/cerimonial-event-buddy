@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -36,10 +35,15 @@ export default function PublicGiftList() {
   }, [listId]);
 
   const loadGiftList = async () => {
-    if (!listId) return;
+    if (!listId) {
+      console.log('No listId provided');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       setIsLoading(true);
+      console.log('Loading gift list with ID:', listId);
 
       // Buscar lista de presentes com evento
       const { data: giftListData, error: listError } = await supabase
@@ -57,13 +61,17 @@ export default function PublicGiftList() {
         .single();
 
       if (listError) {
+        console.error('Error fetching gift list:', listError);
         throw listError;
       }
 
       if (!giftListData) {
+        console.log('Gift list not found or inactive');
         toast.error('Lista de presentes não encontrada ou inativa');
         return;
       }
+
+      console.log('Gift list data found:', giftListData);
 
       // Buscar itens da lista com seleções
       const { data: itemsData, error: itemsError } = await supabase
@@ -76,7 +84,10 @@ export default function PublicGiftList() {
         .eq('is_available', true)
         .order('created_at', { ascending: true });
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('Error fetching gift items:', itemsError);
+        throw itemsError;
+      }
 
       const itemsWithSelections = itemsData?.map(item => ({
         id: item.id,
