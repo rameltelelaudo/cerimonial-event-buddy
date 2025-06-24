@@ -234,6 +234,138 @@ export type Database = {
           },
         ]
       }
+      leju_gift_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          gift_list_id: string
+          id: string
+          image_url: string | null
+          is_available: boolean
+          name: string
+          price: number | null
+          purchased_quantity: number
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          gift_list_id: string
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name: string
+          price?: number | null
+          purchased_quantity?: number
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          gift_list_id?: string
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name?: string
+          price?: number | null
+          purchased_quantity?: number
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leju_gift_items_gift_list_id_fkey"
+            columns: ["gift_list_id"]
+            isOneToOne: false
+            referencedRelation: "leju_gift_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leju_gift_lists: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_id: string
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leju_gift_lists_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "leju_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leju_gift_selections: {
+        Row: {
+          gift_item_id: string
+          guest_email: string | null
+          guest_name: string
+          guest_phone: string | null
+          id: string
+          message: string | null
+          quantity: number
+          selected_at: string
+        }
+        Insert: {
+          gift_item_id: string
+          guest_email?: string | null
+          guest_name: string
+          guest_phone?: string | null
+          id?: string
+          message?: string | null
+          quantity?: number
+          selected_at?: string
+        }
+        Update: {
+          gift_item_id?: string
+          guest_email?: string | null
+          guest_name?: string
+          guest_phone?: string | null
+          id?: string
+          message?: string | null
+          quantity?: number
+          selected_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leju_gift_selections_gift_item_id_fkey"
+            columns: ["gift_item_id"]
+            isOneToOne: false
+            referencedRelation: "leju_gift_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leju_guests: {
         Row: {
           check_in_time: string | null

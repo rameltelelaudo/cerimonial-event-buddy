@@ -1,130 +1,86 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  Calendar, CheckSquare, ListChecks, Users, Send, 
-  Briefcase, LayoutDashboard, HelpCircle, Bot, Receipt, FileText
-} from 'lucide-react';
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { 
+  Calendar, 
+  Users, 
+  CheckSquare, 
+  Building, 
+  Mail, 
+  DollarSign, 
+  FileText, 
+  ClipboardList,
+  Bot,
+  HelpCircle,
+  Gift,
+  Home
+} from 'lucide-react';
 
-// Current version - can be updated programmatically
-const APP_VERSION = "1.0.1";
-
-const menuItems = [
-  { 
-    name: 'Dashboard', 
-    path: '/', 
-    icon: LayoutDashboard,
-    color: "text-indigo-500"
-  },
-  { 
-    name: 'Eventos', 
-    path: '/events', 
-    icon: Calendar,
-    color: "text-pink-500" 
-  },
-  { 
-    name: 'Lista de Convidados', 
-    path: '/guest-list', 
-    icon: Users,
-    color: "text-teal-500" 
-  },
-  { 
-    name: 'Tarefas', 
-    path: '/tasks', 
-    icon: CheckSquare,
-    color: "text-amber-500" 
-  },
-  { 
-    name: 'Checklist', 
-    path: '/checklist', 
-    icon: ListChecks,
-    color: "text-green-500" 
-  },
-  { 
-    name: 'Fornecedores', 
-    path: '/vendors', 
-    icon: Briefcase,
-    color: "text-purple-500" 
-  },
-  { 
-    name: 'Convites', 
-    path: '/invitations', 
-    icon: Send,
-    color: "text-sky-500" 
-  },
-  { 
-    name: 'I.A - Assistente', 
-    path: '/ai-assistant', 
-    icon: Bot,
-    color: "text-cyan-500",
-    image: "/lovable-uploads/c9f269ab-f770-4b9a-8dff-9ff8def43236.png",
-    imageName: "Mel"
-  },
-  { 
-    name: 'Ajuda', 
-    path: '/help', 
-    icon: HelpCircle,
-    color: "text-rose-500" 
-  }
+const navigation = [
+  { name: 'Dashboard', href: '/', icon: Home },
+  { name: 'Eventos', href: '/events', icon: Calendar },
+  { name: 'Lista de Convidados', href: '/guests', icon: Users },
+  { name: 'Lista de Presentes', href: '/gift-list', icon: Gift },
+  { name: 'Tarefas', href: '/tasks', icon: CheckSquare },
+  { name: 'Fornecedores', href: '/vendors', icon: Building },
+  { name: 'Convites', href: '/invitations', icon: Mail },
+  { name: 'Financeiro', href: '/finances', icon: DollarSign },
+  { name: 'Contrato', href: '/contract', icon: FileText },
+  { name: 'Check-in', href: '/checklist', icon: ClipboardList },
+  { name: 'Assistente IA', href: '/ai-assistant', icon: Bot },
+  { name: 'Ajuda', href: '/help', icon: HelpCircle },
 ];
 
-export const Sidebar = () => {
+export const Sidebar: React.FC = () => {
   const location = useLocation();
-  
+
   return (
-    <aside className="flex flex-col h-full w-64 bg-sidebar p-4 border-r bg-white/80 backdrop-blur-sm">
-      <div className="mb-6 mt-2 flex items-center">
-        <img 
-          src="https://i.ibb.co/G40sCgqs/images.jpg" 
-          alt="Vix Assistente" 
-          className="h-8 w-auto mr-2"
-        />
-        <div>
-          <h2 className="text-xl font-bold text-leju-pink">Vix Assistente</h2>
-          <p className="text-sm text-muted-foreground">Gestão de Eventos</p>
+    <div className="hidden md:flex md:w-64 md:flex-col">
+      <div className="flex flex-col flex-grow pt-5 bg-white overflow-y-auto border-r border-gray-200">
+        <div className="flex items-center flex-shrink-0 px-4">
+          <Link to="/" className="flex items-center">
+            <img
+              className="h-8 w-auto"
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_F75OuXg9QmG4tftgIEl6UFyJiIFPNGpXaQ&s"
+              alt="Leju Assessoria"
+            />
+            <span className="ml-2 text-xl font-bold text-leju-pink">
+              Leju Assessoria
+            </span>
+          </Link>
+        </div>
+        <div className="mt-5 flex-grow flex flex-col">
+          <nav className="flex-1 px-2 pb-4 space-y-1">
+            {navigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    cn(
+                      isActive
+                        ? 'bg-leju-pink text-white'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                      'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors'
+                    )
+                  }
+                >
+                  <item.icon
+                    className={cn(
+                      isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500',
+                      'mr-3 flex-shrink-0 h-6 w-6'
+                    )}
+                    aria-hidden="true"
+                  />
+                  {item.name}
+                </NavLink>
+              );
+            })}
+          </nav>
         </div>
       </div>
-      
-      <nav className="space-y-1 flex-1">
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={cn(
-                "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                isActive 
-                  ? "bg-sidebar-accent text-leju-pink" 
-                  : "hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {item.image ? (
-                <div className="mr-3 flex items-center">
-                  <Avatar className="h-5 w-5">
-                    <AvatarImage src={item.image} alt={item.imageName || item.name} />
-                    <AvatarFallback>{item.imageName?.[0] || item.name[0]}</AvatarFallback>
-                  </Avatar>
-                </div>
-              ) : (
-                <item.icon className={cn("h-5 w-5 mr-3", isActive ? "text-leju-pink" : item.color)} />
-              )}
-              {item.name}
-            </Link>
-          );
-        })}
-      </nav>
-      
-      <div className="p-4 mt-auto border-t">
-        <p className="text-xs text-muted-foreground">
-          Vix Assistente v{APP_VERSION}
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          por <a href="https://ramelseg.com.br" target="_blank" rel="noopener noreferrer" className="text-leju-pink hover:underline">Ramel Tecnologia</a>
-        </p>
-      </div>
-    </aside>
+    </div>
   );
 };
