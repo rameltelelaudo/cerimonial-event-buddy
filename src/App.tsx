@@ -44,8 +44,8 @@ function App() {
                   <Route path="/tasks" element={<Tasks />} />
                   <Route path="/vendors" element={<Vendors />} />
                   <Route path="/invitations" element={<Invitations />} />
-                  <Route path="/finances" element={<EventFinances />} />
-                  <Route path="/contract" element={<EventContract />} />
+                  <Route path="/finances/:eventId" element={<EventFinances />} />
+                  <Route path="/contract/:eventId" element={<EventContract />} />
                   <Route path="/checklist" element={<Checklist />} />
                   <Route path="/ai-assistant" element={<AIAssistant />} />
                   <Route path="/help" element={<Help />} />

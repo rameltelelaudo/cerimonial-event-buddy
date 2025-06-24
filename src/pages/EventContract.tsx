@@ -11,9 +11,11 @@ import { ArrowLeft, Loader2, Edit } from 'lucide-react';
 
 const EventContract = () => {
   const isMobile = useIsMobile();
-  const { eventId } = useParams();
+  const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const { events, loading } = useEventContext();
+  
+  // Buscar o evento pelo ID da URL
   const event = events.find(e => e.id === eventId);
 
   if (loading) {

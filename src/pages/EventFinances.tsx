@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Sidebar } from '@/components/Layout/Sidebar';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import { Finance } from '@/types/finance';
 import { useFinances } from '@/hooks/useFinances';
@@ -18,10 +18,13 @@ const EventFinances = () => {
   const isMobile = useIsMobile();
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
-  const { selectedEvent } = useEventContext();
+  const { events, loading } = useEventContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedFinance, setSelectedFinance] = useState<Finance | null>(null);
+
+  // Encontrar o evento pelo ID da URL
+  const selectedEvent = events.find(event => event.id === eventId);
 
   const {
     finances,
@@ -79,8 +82,43 @@ const EventFinances = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        <div className="flex flex-1">
+          {!isMobile && <Sidebar />}
+          <main className="flex-1 p-6">
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-leju-pink" />
+              <span className="ml-2">Carregando...</span>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   if (!selectedEvent) {
-    return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        <div className="flex flex-1">
+          {!isMobile && <Sidebar />}
+          <main className="flex-1 p-6">
+            <div className="bg-white rounded-lg shadow p-6 text-center">
+              <h2 className="text-xl font-semibold mb-4">Evento não encontrado</h2>
+              <p className="text-muted-foreground mb-4">
+                O evento que você está procurando não existe ou foi removido.
+              </p>
+              <Button onClick={() => navigate('/events')}>
+                Voltar para Eventos
+              </Button>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -143,4 +181,3 @@ const EventFinances = () => {
 };
 
 export default EventFinances;
-
