@@ -20,7 +20,7 @@ export const GuestListManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('all');
-  const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
+  const [editingGuest, setEditingGuest] = useState<any>(null);
 
   useEffect(() => {
     if (selectedEvent && user) {
@@ -67,6 +67,47 @@ export const GuestListManager: React.FC = () => {
     toast.info('Funcionalidade de importar contatos em desenvolvimento');
   };
 
+  const handleCheckIn = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('leju_guests')
+        .update({ 
+          checked_in: true, 
+          check_in_time: new Date().toISOString() 
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await loadGuests();
+      toast.success('Check-in realizado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao fazer check-in:', error);
+      toast.error('Erro ao fazer check-in');
+    }
+  };
+
+  const handleEditGuest = (guest: any) => {
+    setEditingGuest(guest);
+  };
+
+  const handleDeleteGuest = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('leju_guests')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await loadGuests();
+      toast.success('Convidado removido com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao remover convidado:', error);
+      toast.error('Erro ao remover convidado');
+    }
+  };
+
   const filteredGuests = guests.filter(guest => {
     const matchesSearch = guest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (guest.email && guest.email.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -100,13 +141,6 @@ export const GuestListManager: React.FC = () => {
           >
             <Share2 className="h-4 w-4 mr-2" />
             Compartilhar Formulário
-          </Button>
-          <Button
-            onClick={() => setIsAddGuestOpen(true)}
-            className="bg-leju-pink hover:bg-leju-pink/90"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Convidado
           </Button>
         </div>
       </div>
@@ -163,18 +197,16 @@ export const GuestListManager: React.FC = () => {
           ) : (
             <GuestTable 
               guests={filteredGuests} 
-              onGuestUpdated={loadGuests}
+              onCheckIn={handleCheckIn}
+              onEdit={handleEditGuest}
+              onDelete={handleDeleteGuest}
             />
           )}
         </CardContent>
       </Card>
 
-      {/* Modal para adicionar convidado */}
-      <AddGuestForm
-        isOpen={isAddGuestOpen}
-        onClose={() => setIsAddGuestOpen(false)}
-        onGuestAdded={loadGuests}
-      />
+      {/* Formulário para adicionar convidado */}
+      <AddGuestForm onGuestAdded={loadGuests} />
     </div>
   );
 };
