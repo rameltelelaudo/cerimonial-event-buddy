@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Users, Check, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Check, X, Upload, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEventContext } from '@/contexts/EventContext';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 interface Guest {
   id: string;
@@ -28,6 +28,15 @@ interface Guest {
   createdAt: Date;
 }
 
+const guestGroups = [
+  'Família',
+  'Padrinhos', 
+  'Amigos',
+  'Colegas de Trabalho',
+  'Fornecedores',
+  'Outros'
+];
+
 export const GuestListManager: React.FC = () => {
   const { user } = useAuth();
   const { selectedEvent } = useEventContext();
@@ -35,6 +44,7 @@ export const GuestListManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
+  const [isBulkUploading, setBulkUploading] = useState(false);
 
   const [guestForm, setGuestForm] = useState({
     name: '',
@@ -113,6 +123,123 @@ export const GuestListManager: React.FC = () => {
     } catch (error: any) {
       console.error('Erro ao adicionar convidado:', error);
       toast.error('Erro ao adicionar convidado');
+    }
+  };
+
+  // Download template Excel
+  const downloadTemplate = () => {
+    const template = [
+      {
+        'Nome': 'João Silva',
+        'Email': 'joao@email.com',
+        'Grupo': 'Família',
+        'Acompanhantes': 1,
+        'Observações': 'Vegetariano'
+      },
+      {
+        'Nome': 'Maria Santos',
+        'Email': 'maria@email.com',
+        'Grupo': 'Amigos',
+        'Acompanhantes': 0,
+        'Observações': ''
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Convidados');
+    
+    // Ajustar largura das colunas
+    const colWidths = [
+      { wch: 20 }, // Nome
+      { wch: 25 }, // Email
+      { wch: 18 }, // Grupo
+      { wch: 15 }, // Acompanhantes
+      { wch: 30 }  // Observações
+    ];
+    worksheet['!cols'] = colWidths;
+
+    XLSX.writeFile(workbook, 'template_convidados.xlsx');
+    toast.success('Template baixado com sucesso!');
+  };
+
+  // Upload em massa
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !selectedEvent) return;
+
+    if (!file.name.match(/\.(xlsx|xls)$/)) {
+      toast.error('Por favor, selecione um arquivo Excel (.xlsx ou .xls)');
+      return;
+    }
+
+    try {
+      setBulkUploading(true);
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const data = new Uint8Array(event.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+          if (jsonData.length === 0) {
+            toast.error('Arquivo vazio ou formato inválido');
+            return;
+          }
+
+          const guests = jsonData.map((row: any) => {
+            const name = row['Nome'] || row['nome'] || row['Name'] || '';
+            const email = row['Email'] || row['email'] || row['E-mail'] || '';
+            const group = row['Grupo'] || row['grupo'] || row['Group'] || 'Outros';
+            const companions = parseInt(row['Acompanhantes'] || row['acompanhantes'] || row['Companions'] || '0') || 0;
+            const notes = row['Observações'] || row['observacoes'] || row['Notes'] || '';
+
+            // Validar grupo
+            const validGroup = guestGroups.includes(group) ? group : 'Outros';
+
+            return {
+              name: name.toString().trim(),
+              email: email.toString().trim() || null,
+              group_type: validGroup,
+              companions: Math.max(0, companions),
+              notes: notes.toString().trim() || null,
+              event_id: selectedEvent.id,
+              user_id: user.id,
+              checked_in: false
+            };
+          }).filter(guest => guest.name); // Filtrar apenas convidados com nome
+
+          if (guests.length === 0) {
+            toast.error('Nenhum convidado válido encontrado no arquivo');
+            return;
+          }
+
+          // Inserir convidados em lote
+          const { error } = await supabase
+            .from('leju_guests')
+            .insert(guests);
+
+          if (error) throw error;
+
+          toast.success(`${guests.length} convidados importados com sucesso!`);
+          loadGuests();
+          
+        } catch (error: any) {
+          console.error('Erro ao processar arquivo:', error);
+          toast.error('Erro ao processar arquivo: ' + error.message);
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    } catch (error: any) {
+      console.error('Erro no upload:', error);
+      toast.error('Erro no upload: ' + error.message);
+    } finally {
+      setBulkUploading(false);
+      // Limpar input
+      e.target.value = '';
     }
   };
 
@@ -241,99 +368,128 @@ export const GuestListManager: React.FC = () => {
         </Card>
       </div>
 
-      {/* Botão Adicionar Convidado */}
-      <div className="flex justify-between items-center">
+      {/* Botões de Ação */}
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <h3 className="text-lg font-semibold">
           Lista de Convidados ({guests.length})
         </h3>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-leju-pink hover:bg-leju-pink/90">
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Convidado
+        <div className="flex gap-2 flex-wrap">
+          {/* Upload em massa */}
+          <Button
+            variant="outline"
+            onClick={downloadTemplate}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Template Excel
+          </Button>
+          
+          <div className="relative">
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleBulkUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              disabled={isBulkUploading}
+            />
+            <Button
+              variant="outline"
+              disabled={isBulkUploading}
+              className="flex items-center gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              {isBulkUploading ? 'Importando...' : 'Importar Excel'}
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingGuest ? 'Editar Convidado' : 'Novo Convidado'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Nome do Convidado *</Label>
-                <Input
-                  value={guestForm.name}
-                  onChange={(e) => setGuestForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Nome completo"
-                  required
-                />
-              </div>
-              <div>
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={guestForm.email}
-                  onChange={(e) => setGuestForm(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="email@exemplo.com"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+          </div>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-leju-pink hover:bg-leju-pink/90">
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Convidado
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingGuest ? 'Editar Convidado' : 'Novo Convidado'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
                 <div>
-                  <Label>Grupo</Label>
-                  <select
-                    value={guestForm.groupType}
-                    onChange={(e) => setGuestForm(prev => ({ ...prev, groupType: e.target.value }))}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="Família">Família</option>
-                    <option value="Amigos">Amigos</option>
-                    <option value="Trabalho">Trabalho</option>
-                    <option value="Outros">Outros</option>
-                  </select>
-                </div>
-                <div>
-                  <Label>Acompanhantes</Label>
+                  <Label>Nome do Convidado *</Label>
                   <Input
-                    type="number"
-                    min="0"
-                    value={guestForm.companions}
-                    onChange={(e) => setGuestForm(prev => ({ ...prev, companions: parseInt(e.target.value) || 0 }))}
+                    value={guestForm.name}
+                    onChange={(e) => setGuestForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Nome completo"
+                    required
                   />
                 </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={guestForm.email}
+                    onChange={(e) => setGuestForm(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Grupo</Label>
+                    <select
+                      value={guestForm.groupType}
+                      onChange={(e) => setGuestForm(prev => ({ ...prev, groupType: e.target.value }))}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      {guestGroups.map((group) => (
+                        <option key={group} value={group}>{group}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label>Acompanhantes</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={guestForm.companions}
+                      onChange={(e) => setGuestForm(prev => ({ ...prev, companions: parseInt(e.target.value) || 0 }))}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Observações</Label>
+                  <Textarea
+                    value={guestForm.notes}
+                    onChange={(e) => setGuestForm(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Observações sobre o convidado..."
+                    rows={3}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsDialogOpen(false);
+                      setEditingGuest(null);
+                      setGuestForm({ name: '', email: '', groupType: 'Família', companions: 0, notes: '' });
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={editingGuest ? updateGuest : addGuest}
+                    className="bg-leju-pink hover:bg-leju-pink/90"
+                    disabled={!guestForm.name.trim()}
+                  >
+                    {editingGuest ? 'Atualizar' : 'Adicionar'}
+                  </Button>
+                </div>
               </div>
-              <div>
-                <Label>Observações</Label>
-                <Textarea
-                  value={guestForm.notes}
-                  onChange={(e) => setGuestForm(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="Observações sobre o convidado..."
-                  rows={3}
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setIsDialogOpen(false);
-                    setEditingGuest(null);
-                    setGuestForm({ name: '', email: '', groupType: 'Família', companions: 0, notes: '' });
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={editingGuest ? updateGuest : addGuest}
-                  className="bg-leju-pink hover:bg-leju-pink/90"
-                  disabled={!guestForm.name.trim()}
-                >
-                  {editingGuest ? 'Atualizar' : 'Adicionar'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Tabela de Convidados */}

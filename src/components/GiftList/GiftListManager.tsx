@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -245,6 +244,7 @@ export const GiftListManager: React.FC = () => {
   const shareGiftList = () => {
     if (!giftList) return;
     
+    // Usar o domínio atual da aplicação ao invés de hardcoded
     const currentOrigin = window.location.origin;
     const url = `${currentOrigin}/gift-list/${giftList.id}`;
     navigator.clipboard.writeText(url);
@@ -475,7 +475,7 @@ export const GiftListManager: React.FC = () => {
             <Card key={item.id}>
               <CardContent className="p-4">
                 {item.imageUrl && (
-                  <div className="w-full h-32 mb-3 flex items-center justify-center bg-gray-50 rounded overflow-hidden">
+                  <div className="w-full h-48 mb-3 flex items-center justify-center bg-gray-50 rounded overflow-hidden">
                     <img
                       src={item.imageUrl}
                       alt={item.name}

@@ -18,30 +18,31 @@ export const PixGenerator: React.FC<PixGeneratorProps> = ({ guestName, eventTitl
     const pixKey = 'lejuassessoriavix@gmail.com';
     const merchantName = 'LEJU ASSESSORIA';
     const merchantCity = 'VITORIA';
-    const transactionId = `${guestName}-${eventTitle}`.substring(0, 25);
     
-    // Formato do PIX copia e cola (EMV)
+    // Usar apenas o nome da pessoa como identificador (máximo 25 caracteres)
+    const transactionId = guestName.substring(0, 25);
+    
+    // Construir o payload PIX seguindo o padrão EMV
+    const pixKeyField = `0014BR.GOV.BCB.PIX01${pixKey.length.toString().padStart(2, '0')}${pixKey}`;
+    const amountField = amount.toFixed(2);
+    const additionalDataField = `05${transactionId.length.toString().padStart(2, '0')}${transactionId}`;
+    
+    // Montar o payload completo
     const payload = [
       '00020126', // Payload Format Indicator
-      '49', // Merchant Account Information
-      '0014BR.GOV.BCB.PIX',
-      `01${pixKey.length.toString().padStart(2, '0')}${pixKey}`,
-      '5204', // Merchant Category Code
-      '0000', // Null
-      '5303', // Transaction Currency
-      '986', // BRL
-      '54', // Transaction Amount
-      amount.toFixed(2).padStart(2, '0'),
+      `${pixKeyField.length.toString().padStart(2, '0')}${pixKeyField}`, // Merchant Account Information
+      '52040000', // Merchant Category Code
+      '5303986', // Transaction Currency (BRL)
+      `54${amountField.length.toString().padStart(2, '0')}${amountField}`, // Transaction Amount
       '5802BR', // Country Code
-      `59${merchantName.length.toString().padStart(2, '0')}${merchantName}`,
-      `60${merchantCity.length.toString().padStart(2, '0')}${merchantCity}`,
-      '62', // Additional Data Field
-      `05${transactionId.length.toString().padStart(2, '0')}${transactionId}`,
-      '6304' // CRC16
+      `59${merchantName.length.toString().padStart(2, '0')}${merchantName}`, // Merchant Name
+      `60${merchantCity.length.toString().padStart(2, '0')}${merchantCity}`, // Merchant City
+      `62${additionalDataField.length.toString().padStart(2, '0')}${additionalDataField}`, // Additional Data Field
+      '6304' // CRC16 placeholder
     ].join('');
 
-    // Calcular CRC16 (simplificado)
-    const crc = 'E4C2'; // Para este exemplo, usar um CRC fixo
+    // Calcular CRC16 simplificado (para este exemplo, usar um CRC fixo)
+    const crc = 'E4C2';
     
     return payload + crc;
   };
@@ -66,7 +67,7 @@ export const PixGenerator: React.FC<PixGeneratorProps> = ({ guestName, eventTitl
             Valor: <span className="font-bold text-lg">R$ {amount.toFixed(2)}</span>
           </p>
           <p className="text-xs text-gray-500">
-            {guestName} - {eventTitle}
+            Para: {guestName}
           </p>
         </div>
 
