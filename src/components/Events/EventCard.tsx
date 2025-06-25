@@ -1,134 +1,108 @@
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { CalendarDays, MapPin, Users, Star } from 'lucide-react';
+import { formatDate } from '@/utils/eventUtils';
 import { Event } from '@/types/event';
-import { Calendar, MapPin, Clock, Link as LinkIcon, FileText } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { ImageUploadButton } from './ImageUploadButton';
 import { EventCardActions } from './EventCardActions';
-import { ShareEventPopover } from './ShareEventPopover';
 
 interface EventCardProps {
   event: Event;
-  onEditEvent: (event: Event) => void;
-  onDeleteEvent: (event: Event) => void;
-  onSelectEvent: (event: Event) => void;
-  onImageUploaded?: (eventId: string, imageUrl: string) => void;
+  onEdit: (event: Event) => void;
+  onDelete: (id: string) => void;
+  onSelect?: (event: Event) => void;
+  isSelected?: boolean;
 }
 
-export const EventCard = ({
-  event,
-  onEditEvent,
-  onDeleteEvent,
-  onSelectEvent,
-  onImageUploaded
-}: EventCardProps) => {
-  const navigate = useNavigate();
-  const [showSharePopover, setShowSharePopover] = React.useState(false);
-
-  const handleManageEvent = () => {
-    onSelectEvent(event);
-    navigate('/guest-list');
-  };
-
-  const handleImageUploaded = (imageUrl: string) => {
-    if (onImageUploaded) {
-      onImageUploaded(event.id, imageUrl);
+export function EventCard({ event, onEdit, onDelete, onSelect, isSelected }: EventCardProps) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Planejamento':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Confirmado':
+        return 'bg-green-100 text-green-800';
+      case 'Realizado':
+        return 'bg-blue-100 text-blue-800';
+      case 'Cancelado':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
+  const shareGuestForm = () => {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const baseUrl = isLocalhost ? window.location.origin : 'https://leju-assessment-app.lovable.app';
+    const url = `${baseUrl}/public-guest-form/${event.id}`;
+    navigator.clipboard.writeText(url);
+  };
+
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <div className="h-32 bg-leju-pink/20 flex items-center justify-center relative">
-        {event.coverImage ? (
-          <div className="w-full h-full flex items-center justify-center bg-gray-50">
-            <img 
-              src={event.coverImage} 
-              alt={event.title} 
-              className="max-w-full max-h-full object-contain"
+    <Card 
+      className={`transition-all duration-200 hover:shadow-md cursor-pointer ${
+        isSelected ? 'ring-2 ring-leju-pink' : ''
+      }`}
+      onClick={() => onSelect?.(event)}
+    >
+      <CardContent className="p-0">
+        {event.image && (
+          <div className="w-full h-48 overflow-hidden rounded-t-lg">
+            <img
+              src={event.image}
+              alt={event.title}
+              className="w-full h-full object-contain bg-gray-50"
             />
           </div>
-        ) : (
-          <Calendar className="h-12 w-12 text-leju-pink/60" />
         )}
         
-        <div className="absolute top-2 right-2 flex gap-2">
-          <ImageUploadButton 
-            eventId={event.id} 
-            onImageUploaded={handleImageUploaded} 
-          />
-          
-          <EventCardActions 
-            event={event} 
-            onEditEvent={onEditEvent} 
-            onDeleteEvent={onDeleteEvent} 
-          />
-          
-          <ShareEventPopover
-            eventId={event.id}
-            eventTitle={event.title}
-            isOpen={showSharePopover}
-            onOpenChange={setShowSharePopover}
-          />
-        </div>
-      </div>
-      <CardHeader className="pb-2">
-        <CardTitle>{event.title}</CardTitle>
-        <CardDescription>{event.type}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="flex items-start">
-          <Clock className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
-          <span>
-            {format(new Date(event.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            {' às '}
-            {format(new Date(event.date), "HH:mm", { locale: ptBR })}
-          </span>
-        </div>
-        <div className="flex items-start">
-          <MapPin className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
-          <span>{event.location}</span>
-        </div>
-        <div className="flex items-center mt-2 pt-2 border-t">
-          <LinkIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-          <a 
-            href={`/public-guest-form/${event.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-leju-pink hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            Formulário público de confirmação
-          </a>
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-3">
+            <h3 className="text-lg font-semibold text-gray-900 flex-1">
+              {event.title}
+            </h3>
+            <Badge className={getStatusColor(event.status)}>
+              {event.status}
+            </Badge>
+          </div>
+
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center text-sm text-gray-600">
+              <CalendarDays className="h-4 w-4 mr-2" />
+              {formatDate(event.date)}
+            </div>
+            
+            <div className="flex items-center text-sm text-gray-600">
+              <MapPin className="h-4 w-4 mr-2" />
+              {event.location}
+            </div>
+            
+            <div className="flex items-center text-sm text-gray-600">
+              <Users className="h-4 w-4 mr-2" />
+              {event.guestCount || 0} convidados
+            </div>
+          </div>
+
+          {event.description && (
+            <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+              {event.description}
+            </p>
+          )}
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Star className="h-4 w-4 text-yellow-500 mr-1" />
+              <span className="text-sm text-gray-600">Evento</span>
+            </div>
+            
+            <EventCardActions
+              event={event}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              shareGuestForm={shareGuestForm}
+            />
+          </div>
         </div>
       </CardContent>
-      <CardFooter className="grid grid-cols-3 gap-2">
-        <Button
-          variant="outline"
-          className="border-leju-pink text-leju-pink hover:bg-leju-pink/10"
-          onClick={handleManageEvent}
-        >
-          Gerenciar
-        </Button>
-        <Button
-          variant="outline"
-          className="border-blue-500 text-blue-500 hover:bg-blue-500/10"
-          onClick={() => navigate(`/finances/${event.id}`)}
-        >
-          Financeiro
-        </Button>
-        <Button
-          variant="outline"
-          className="border-emerald-500 text-emerald-500 hover:bg-emerald-500/10"
-          onClick={() => navigate(`/contract/${event.id}`)}
-        >
-          <FileText className="h-4 w-4 mr-1" />
-          Contrato
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

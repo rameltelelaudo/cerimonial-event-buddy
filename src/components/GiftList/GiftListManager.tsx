@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -244,9 +245,11 @@ export const GiftListManager: React.FC = () => {
   const shareGiftList = () => {
     if (!giftList) return;
     
-    // Usar o domínio atual da aplicação ao invés de hardcoded
-    const currentOrigin = window.location.origin;
-    const url = `${currentOrigin}/gift-list/${giftList.id}`;
+    // Detectar se está em desenvolvimento ou produção
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const baseUrl = isLocalhost ? window.location.origin : 'https://leju-assessment-app.lovable.app';
+    const url = `${baseUrl}/gift-list/${giftList.id}`;
+    
     navigator.clipboard.writeText(url);
     toast.success('Link da lista copiado para a área de transferência!');
   };

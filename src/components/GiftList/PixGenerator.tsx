@@ -13,41 +13,8 @@ interface PixGeneratorProps {
 }
 
 export const PixGenerator: React.FC<PixGeneratorProps> = ({ guestName, eventTitle, amount }) => {
-  // Função para gerar o código PIX
-  const generatePixCode = () => {
-    const pixKey = 'lejuassessoriavix@gmail.com';
-    const merchantName = 'LEJU ASSESSORIA';
-    const merchantCity = 'VITORIA';
-    
-    // Usar apenas o nome da pessoa como identificador (máximo 25 caracteres)
-    const transactionId = guestName.substring(0, 25);
-    
-    // Construir o payload PIX seguindo o padrão EMV
-    const pixKeyField = `0014BR.GOV.BCB.PIX01${pixKey.length.toString().padStart(2, '0')}${pixKey}`;
-    const amountField = amount.toFixed(2);
-    const additionalDataField = `05${transactionId.length.toString().padStart(2, '0')}${transactionId}`;
-    
-    // Montar o payload completo
-    const payload = [
-      '00020126', // Payload Format Indicator
-      `${pixKeyField.length.toString().padStart(2, '0')}${pixKeyField}`, // Merchant Account Information
-      '52040000', // Merchant Category Code
-      '5303986', // Transaction Currency (BRL)
-      `54${amountField.length.toString().padStart(2, '0')}${amountField}`, // Transaction Amount
-      '5802BR', // Country Code
-      `59${merchantName.length.toString().padStart(2, '0')}${merchantName}`, // Merchant Name
-      `60${merchantCity.length.toString().padStart(2, '0')}${merchantCity}`, // Merchant City
-      `62${additionalDataField.length.toString().padStart(2, '0')}${additionalDataField}`, // Additional Data Field
-      '6304' // CRC16 placeholder
-    ].join('');
-
-    // Calcular CRC16 simplificado (para este exemplo, usar um CRC fixo)
-    const crc = 'E4C2';
-    
-    return payload + crc;
-  };
-
-  const pixCode = generatePixCode();
+  // Código PIX simplificado e fixo
+  const pixCode = `00020126490014BR.GOV.BCB.PIX0127lejuassessoriavix@gmail.com52040000530398654${amount.toFixed(2).padStart(6, '0')}5802BR5901N6001C62${guestName.length.toString().padStart(2, '0')}${guestName.substring(0, 25)}6304E4C2`;
 
   const copyPixCode = () => {
     navigator.clipboard.writeText(pixCode);
@@ -84,7 +51,7 @@ export const PixGenerator: React.FC<PixGeneratorProps> = ({ guestName, eventTitl
 
         <div className="space-y-2">
           <p className="text-sm font-medium text-center">PIX Copia e Cola:</p>
-          <div className="bg-gray-50 p-3 rounded text-xs break-all">
+          <div className="bg-gray-50 p-3 rounded text-xs break-all font-mono">
             {pixCode}
           </div>
           <Button 
