@@ -49,7 +49,7 @@ function App() {
                   <Route path="/checklist" element={<Checklist />} />
                   <Route path="/ai-assistant" element={<AIAssistant />} />
                   <Route path="/help" element={<Help />} />
-                  <Route path="/guest-form/:eventId" element={<PublicGuestForm />} />
+                  <Route path="/public-guest-form/:eventId" element={<PublicGuestForm />} />
                   <Route path="/gift-list/:listId" element={<PublicGiftList />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

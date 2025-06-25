@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { Gift, Heart, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { GiftListWithItems, GiftItemWithSelections } from '@/types/giftList';
+import { PixGenerator } from '@/components/GiftList/PixGenerator';
 
 export default function PublicGiftList() {
   const { listId } = useParams();
@@ -19,6 +21,7 @@ export default function PublicGiftList() {
   const [selectedItem, setSelectedItem] = useState<GiftItemWithSelections | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPix, setShowPix] = useState(false);
 
   const [guestForm, setGuestForm] = useState({
     name: '',
@@ -157,6 +160,7 @@ export default function PublicGiftList() {
       quantity: 1,
       message: ''
     });
+    setShowPix(false);
     setIsDialogOpen(true);
   };
 
@@ -199,9 +203,15 @@ export default function PublicGiftList() {
       if (updateError) throw updateError;
 
       toast.success('Presente selecionado com sucesso! 🎁');
-      setIsDialogOpen(false);
-      setSelectedItem(null);
-      loadGiftList(); // Recarregar para atualizar disponibilidade
+      
+      // Mostrar PIX se o item tem preço
+      if (selectedItem.price) {
+        setShowPix(true);
+      } else {
+        setIsDialogOpen(false);
+        setSelectedItem(null);
+        loadGiftList(); // Recarregar para atualizar disponibilidade
+      }
 
     } catch (error: any) {
       console.error('Erro ao selecionar presente:', error);
@@ -209,6 +219,13 @@ export default function PublicGiftList() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePixClose = () => {
+    setIsDialogOpen(false);
+    setSelectedItem(null);
+    setShowPix(false);
+    loadGiftList(); // Recarregar para atualizar disponibilidade
   };
 
   if (isLoading) {
@@ -383,100 +400,117 @@ export default function PublicGiftList() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Gift className="h-5 w-5 text-leju-pink" />
-                Escolher Presente
+                {showPix ? 'Pagamento' : 'Escolher Presente'}
               </DialogTitle>
             </DialogHeader>
 
             {selectedItem && (
               <div className="space-y-4">
-                <div className="text-center p-4 bg-pink-50 rounded-lg">
-                  <h3 className="font-bold text-lg text-gray-800 mb-1">
-                    {selectedItem.name}
-                  </h3>
-                  {selectedItem.price && (
-                    <p className="text-xl font-bold text-leju-pink">
-                      R$ {selectedItem.price.toFixed(2)}
-                    </p>
-                  )}
-                </div>
+                {!showPix ? (
+                  <>
+                    <div className="text-center p-4 bg-pink-50 rounded-lg">
+                      <h3 className="font-bold text-lg text-gray-800 mb-1">
+                        {selectedItem.name}
+                      </h3>
+                      {selectedItem.price && (
+                        <p className="text-xl font-bold text-leju-pink">
+                          R$ {selectedItem.price.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
 
-                <div>
-                  <Label htmlFor="guest-name">Seu Nome *</Label>
-                  <Input
-                    id="guest-name"
-                    value={guestForm.name}
-                    onChange={(e) => setGuestForm(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Digite seu nome"
-                    required
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="guest-name">Seu Nome *</Label>
+                      <Input
+                        id="guest-name"
+                        value={guestForm.name}
+                        onChange={(e) => setGuestForm(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Digite seu nome"
+                        required
+                      />
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="guest-email">Email</Label>
-                    <Input
-                      id="guest-email"
-                      type="email"
-                      value={guestForm.email}
-                      onChange={(e) => setGuestForm(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="seu@email.com"
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="guest-email">Email</Label>
+                        <Input
+                          id="guest-email"
+                          type="email"
+                          value={guestForm.email}
+                          onChange={(e) => setGuestForm(prev => ({ ...prev, email: e.target.value }))}
+                          placeholder="seu@email.com"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="guest-phone">Telefone</Label>
+                        <Input
+                          id="guest-phone"
+                          value={guestForm.phone}
+                          onChange={(e) => setGuestForm(prev => ({ ...prev, phone: e.target.value }))}
+                          placeholder="(00) 00000-0000"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="quantity">
+                        Quantidade (máx: {selectedItem.availableQuantity})
+                      </Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        min="1"
+                        max={selectedItem.availableQuantity}
+                        value={guestForm.quantity}
+                        onChange={(e) => setGuestForm(prev => ({ 
+                          ...prev, 
+                          quantity: Math.min(parseInt(e.target.value) || 1, selectedItem.availableQuantity)
+                        }))}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="message">Mensagem (Opcional)</Label>
+                      <Textarea
+                        id="message"
+                        value={guestForm.message}
+                        onChange={(e) => setGuestForm(prev => ({ ...prev, message: e.target.value }))}
+                        placeholder="Deixe uma mensagem carinhosa para os noivos..."
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsDialogOpen(false)}
+                        disabled={isSubmitting}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={submitSelection}
+                        disabled={isSubmitting || !guestForm.name.trim()}
+                        className="bg-leju-pink hover:bg-leju-pink/90"
+                      >
+                        {isSubmitting ? 'Confirmando...' : 'Confirmar Escolha'}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <PixGenerator
+                      guestName={guestForm.name}
+                      eventTitle={(giftList as any).event?.title || 'Evento'}
+                      amount={selectedItem.price ? selectedItem.price * guestForm.quantity : 0}
                     />
+                    <div className="flex justify-center">
+                      <Button onClick={handlePixClose} className="bg-leju-pink hover:bg-leju-pink/90">
+                        Fechar
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="guest-phone">Telefone</Label>
-                    <Input
-                      id="guest-phone"
-                      value={guestForm.phone}
-                      onChange={(e) => setGuestForm(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="quantity">
-                    Quantidade (máx: {selectedItem.availableQuantity})
-                  </Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    max={selectedItem.availableQuantity}
-                    value={guestForm.quantity}
-                    onChange={(e) => setGuestForm(prev => ({ 
-                      ...prev, 
-                      quantity: Math.min(parseInt(e.target.value) || 1, selectedItem.availableQuantity)
-                    }))}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="message">Mensagem (Opcional)</Label>
-                  <Textarea
-                    id="message"
-                    value={guestForm.message}
-                    onChange={(e) => setGuestForm(prev => ({ ...prev, message: e.target.value }))}
-                    placeholder="Deixe uma mensagem carinhosa para os noivos..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                    disabled={isSubmitting}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={submitSelection}
-                    disabled={isSubmitting || !guestForm.name.trim()}
-                    className="bg-leju-pink hover:bg-leju-pink/90"
-                  >
-                    {isSubmitting ? 'Confirmando...' : 'Confirmar Escolha'}
-                  </Button>
-                </div>
+                )}
               </div>
             )}
           </DialogContent>

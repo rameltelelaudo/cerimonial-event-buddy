@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Share2, Eye, Gift } from 'lucide-react';
+import { Plus, Edit, Trash2, Share2, Gift } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEventContext } from '@/contexts/EventContext';
@@ -244,7 +245,8 @@ export const GiftListManager: React.FC = () => {
   const shareGiftList = () => {
     if (!giftList) return;
     
-    const url = `${window.location.origin}/gift-list/${giftList.id}`;
+    const currentOrigin = window.location.origin;
+    const url = `${currentOrigin}/gift-list/${giftList.id}`;
     navigator.clipboard.writeText(url);
     toast.success('Link da lista copiado para a área de transferência!');
   };
