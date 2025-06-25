@@ -55,8 +55,7 @@ export const GuestListManager: React.FC = () => {
   const shareGuestForm = () => {
     if (!selectedEvent) return;
     
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const baseUrl = isLocalhost ? window.location.origin : 'https://leju-assessment-app.lovable.app';
+    const baseUrl = 'https://leju-assessment-app.lovable.app';
     const url = `${baseUrl}/public-guest-form/${selectedEvent.id}`;
     
     navigator.clipboard.writeText(url);

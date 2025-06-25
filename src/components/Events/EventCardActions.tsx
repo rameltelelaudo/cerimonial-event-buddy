@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Event } from '@/types/event';
@@ -9,12 +9,14 @@ interface EventCardActionsProps {
   event: Event;
   onEditEvent: (event: Event) => void;
   onDeleteEvent: (event: Event) => void;
+  shareGuestForm: () => void;
 }
 
 export const EventCardActions = ({ 
   event, 
   onEditEvent, 
-  onDeleteEvent 
+  onDeleteEvent,
+  shareGuestForm
 }: EventCardActionsProps) => {
   return (
     <DropdownMenu>
@@ -27,6 +29,10 @@ export const EventCardActions = ({
         <DropdownMenuItem onClick={() => onEditEvent(event)}>
           <Edit className="h-4 w-4 mr-2" />
           Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={shareGuestForm}>
+          <Share2 className="h-4 w-4 mr-2" />
+          Compartilhar Formulário
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => onDeleteEvent(event)}

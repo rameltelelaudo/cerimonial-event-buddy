@@ -8,13 +8,14 @@ import { EventCardActions } from './EventCardActions';
 
 interface EventCardProps {
   event: Event;
-  onEdit: (event: Event) => void;
-  onDelete: (id: string) => void;
-  onSelect?: (event: Event) => void;
+  onEditEvent: (event: Event) => void;
+  onDeleteEvent: (event: Event) => void;
+  onSelectEvent?: (event: Event) => void;
   isSelected?: boolean;
+  onImageUploaded?: (eventId: string, imageUrl: string) => void;
 }
 
-export function EventCard({ event, onEdit, onDelete, onSelect, isSelected }: EventCardProps) {
+export function EventCard({ event, onEditEvent, onDeleteEvent, onSelectEvent, isSelected }: EventCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Planejamento':
@@ -31,8 +32,7 @@ export function EventCard({ event, onEdit, onDelete, onSelect, isSelected }: Eve
   };
 
   const shareGuestForm = () => {
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const baseUrl = isLocalhost ? window.location.origin : 'https://leju-assessment-app.lovable.app';
+    const baseUrl = 'https://leju-assessment-app.lovable.app';
     const url = `${baseUrl}/public-guest-form/${event.id}`;
     navigator.clipboard.writeText(url);
   };
@@ -42,13 +42,13 @@ export function EventCard({ event, onEdit, onDelete, onSelect, isSelected }: Eve
       className={`transition-all duration-200 hover:shadow-md cursor-pointer ${
         isSelected ? 'ring-2 ring-leju-pink' : ''
       }`}
-      onClick={() => onSelect?.(event)}
+      onClick={() => onSelectEvent?.(event)}
     >
       <CardContent className="p-0">
-        {event.image && (
+        {(event.image || event.coverImage) && (
           <div className="w-full h-48 overflow-hidden rounded-t-lg">
             <img
-              src={event.image}
+              src={event.image || event.coverImage}
               alt={event.title}
               className="w-full h-full object-contain bg-gray-50"
             />
@@ -96,8 +96,8 @@ export function EventCard({ event, onEdit, onDelete, onSelect, isSelected }: Eve
             
             <EventCardActions
               event={event}
-              onEdit={onEdit}
-              onDelete={onDelete}
+              onEditEvent={onEditEvent}
+              onDeleteEvent={onDeleteEvent}
               shareGuestForm={shareGuestForm}
             />
           </div>
