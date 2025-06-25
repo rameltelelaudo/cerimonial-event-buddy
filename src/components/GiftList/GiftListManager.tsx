@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -474,11 +473,13 @@ export const GiftListManager: React.FC = () => {
             <Card key={item.id}>
               <CardContent className="p-4">
                 {item.imageUrl && (
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="w-full h-32 object-cover rounded mb-3"
-                  />
+                  <div className="w-full h-32 mb-3 flex items-center justify-center bg-gray-50 rounded overflow-hidden">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                 )}
                 <h4 className="font-semibold mb-2">{item.name}</h4>
                 {item.description && (

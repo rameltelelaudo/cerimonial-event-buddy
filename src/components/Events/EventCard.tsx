@@ -44,11 +44,13 @@ export const EventCard = ({
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
       <div className="h-32 bg-leju-pink/20 flex items-center justify-center relative">
         {event.coverImage ? (
-          <img 
-            src={event.coverImage} 
-            alt={event.title} 
-            className="w-full h-full object-cover"
-          />
+          <div className="w-full h-full flex items-center justify-center bg-gray-50">
+            <img 
+              src={event.coverImage} 
+              alt={event.title} 
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
         ) : (
           <Calendar className="h-12 w-12 text-leju-pink/60" />
         )}
