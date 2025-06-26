@@ -9,6 +9,7 @@ import { EventCardActions } from './EventCardActions';
 import { ShareEventPopover } from './ShareEventPopover';
 import { ImageUploadButton } from './ImageUploadButton';
 import { useState } from 'react';
+import { useEventContext } from '@/contexts/EventContext';
 
 interface EventCardProps {
   event: Event;
@@ -28,6 +29,7 @@ export function EventCard({
   onImageUploaded 
 }: EventCardProps) {
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const { setSelectedEvent } = useEventContext();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -43,14 +45,33 @@ export function EventCard({
   };
 
   const shareGuestForm = () => {
-    const baseUrl = 'https://app.lejuassessoria.com.br';
-    const url = `${baseUrl}/public-guest-form/${event.id}`;
-    navigator.clipboard.writeText(url);
+    const url = `/public-guest-form/${event.id}`;
+    const fullUrl = window.location.origin + url;
+    navigator.clipboard.writeText(fullUrl);
   };
 
   const getPublicFormUrl = () => {
-    const baseUrl = 'https://app.lejuassessoria.com.br';
-    return `${baseUrl}/public-guest-form/${event.id}`;
+    return `/public-guest-form/${event.id}`;
+  };
+
+  const handleManageClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Selecionar o evento no contexto global
+    setSelectedEvent(event);
+    // Navegar para a lista de convidados
+    window.location.href = '/guest-list';
+  };
+
+  const handleFinanceClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedEvent(event);
+    window.location.href = `/finances/${event.id}`;
+  };
+
+  const handleContractClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedEvent(event);
+    window.location.href = `/contract/${event.id}`;
   };
 
   return (
@@ -111,17 +132,17 @@ export function EventCard({
 
           <div className="space-y-2 mb-4">
             <div className="flex items-center text-sm text-gray-600">
-              <CalendarDays className="h-4 w-4 mr-2" />
+              <CalendarDays className="h-4 w-4 mr-2 text-leju-pink" />
               {formatDate(event.date)}
             </div>
             
             <div className="flex items-center text-sm text-gray-600">
-              <MapPin className="h-4 w-4 mr-2" />
+              <MapPin className="h-4 w-4 mr-2 text-leju-pink" />
               {event.location}
             </div>
             
             <div className="flex items-center text-sm text-gray-600">
-              <Users className="h-4 w-4 mr-2" />
+              <Users className="h-4 w-4 mr-2 text-leju-pink" />
               {event.guestCount || 0} convidados
             </div>
           </div>
@@ -147,11 +168,7 @@ export function EventCard({
               variant="outline"
               size="sm"
               className="text-leju-pink border-leju-pink hover:bg-leju-pink hover:text-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Navegar para gerenciar (lista de convidados)
-                window.location.href = '/guest-list';
-              }}
+              onClick={handleManageClick}
             >
               Gerenciar
             </Button>
@@ -160,10 +177,7 @@ export function EventCard({
               variant="outline"
               size="sm"
               className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.location.href = `/finances/${event.id}`;
-              }}
+              onClick={handleFinanceClick}
             >
               Financeiro
             </Button>
@@ -172,10 +186,7 @@ export function EventCard({
               variant="outline"
               size="sm"
               className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.location.href = `/contract/${event.id}`;
-              }}
+              onClick={handleContractClick}
             >
               Contrato
             </Button>

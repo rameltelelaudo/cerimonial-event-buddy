@@ -244,9 +244,8 @@ export const GiftListManager: React.FC = () => {
   const shareGiftList = () => {
     if (!giftList) return;
     
-    // Usar sempre o domínio de produção
-    const baseUrl = 'https://app.lejuassessoria.com.br';
-    const url = `${baseUrl}/gift-list/${giftList.id}`;
+    // Usar URL relativa baseada no domínio atual
+    const url = `${window.location.origin}/gift-list/${giftList.id}`;
     
     navigator.clipboard.writeText(url);
     toast.success('Link da lista copiado para a área de transferência!');
@@ -273,7 +272,7 @@ export const GiftListManager: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5" />
+            <Gift className="h-5 w-5 text-leju-pink" />
             Lista de Presentes
           </CardTitle>
         </CardHeader>
@@ -339,7 +338,7 @@ export const GiftListManager: React.FC = () => {
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Gift className="h-5 w-5" />
+                <Gift className="h-5 w-5 text-leju-pink" />
                 {giftList.title}
                 <Badge variant={giftList.isActive ? "default" : "secondary"}>
                   {giftList.isActive ? 'Ativa' : 'Inativa'}
@@ -354,6 +353,7 @@ export const GiftListManager: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={shareGiftList}
+                className="text-leju-pink border-leju-pink hover:bg-leju-pink hover:text-white"
               >
                 <Share2 className="h-4 w-4 mr-2" />
                 Compartilhar
@@ -524,14 +524,14 @@ export const GiftListManager: React.FC = () => {
                     size="sm"
                     onClick={() => openEditItem(item)}
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-4 w-4 text-leju-pink" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => deleteGiftItem(item.id)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
                 </div>
               </CardContent>
