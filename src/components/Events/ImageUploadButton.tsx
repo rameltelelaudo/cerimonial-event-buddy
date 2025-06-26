@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 
 interface ImageUploadButtonProps {
   eventId: string;
-  onImageUploaded: (imageUrl: string) => void;
+  onImageUploaded: (eventId: string, imageUrl: string) => void;
 }
 
 export const ImageUploadButton: React.FC<ImageUploadButtonProps> = ({ eventId, onImageUploaded }) => {
@@ -62,7 +62,7 @@ export const ImageUploadButton: React.FC<ImageUploadButtonProps> = ({ eventId, o
       
       if (updateError) throw updateError;
       
-      onImageUploaded(publicUrlData.publicUrl);
+      onImageUploaded(eventId, publicUrlData.publicUrl);
       toast.success('Imagem do evento atualizada com sucesso!');
       
     } catch (error: any) {
