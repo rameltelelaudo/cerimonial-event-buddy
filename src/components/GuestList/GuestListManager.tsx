@@ -43,7 +43,19 @@ export const GuestListManager: React.FC = () => {
 
       if (error) throw error;
 
-      setGuests(data || []);
+      // Mapear os dados do banco para o formato esperado pelos componentes
+      const mappedGuests = (data || []).map(guest => ({
+        id: guest.id,
+        name: guest.name,
+        email: guest.email,
+        group: guest.group_type,
+        companions: guest.companions,
+        notes: guest.notes,
+        checkedIn: guest.checked_in,
+        checkInTime: guest.check_in_time ? new Date(guest.check_in_time) : undefined
+      }));
+
+      setGuests(mappedGuests);
     } catch (error: any) {
       console.error('Erro ao carregar convidados:', error);
       toast.error('Erro ao carregar lista de convidados');
@@ -111,7 +123,7 @@ export const GuestListManager: React.FC = () => {
   const filteredGuests = guests.filter(guest => {
     const matchesSearch = guest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (guest.email && guest.email.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesGroup = selectedGroup === 'all' || guest.group_type === selectedGroup;
+    const matchesGroup = selectedGroup === 'all' || guest.group === selectedGroup;
     return matchesSearch && matchesGroup;
   });
 
