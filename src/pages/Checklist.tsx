@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Guest, GuestGroup } from '@/types/guest';
 import { ChecklistFilters } from '@/components/Checklist/ChecklistFilters';
 import { ChecklistTable } from '@/components/Checklist/ChecklistTable';
+import { ChecklistStats } from '@/components/Checklist/ChecklistStats';
 
 const Checklist = () => {
   const isMobile = useIsMobile();
@@ -134,6 +135,10 @@ const Checklist = () => {
               Realize o check-in dos convidados no dia do evento
             </p>
           </div>
+          
+          {guests.length > 0 && (
+            <ChecklistStats guests={guests} />
+          )}
           
           <ChecklistFilters 
             searchTerm={searchTerm}

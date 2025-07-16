@@ -10,6 +10,7 @@ import { ShareEventPopover } from './ShareEventPopover';
 import { ImageUploadButton } from './ImageUploadButton';
 import { useState } from 'react';
 import { useEventContext } from '@/contexts/EventContext';
+import { useNavigate } from 'react-router-dom';
 
 interface EventCardProps {
   event: Event;
@@ -30,6 +31,7 @@ export function EventCard({
 }: EventCardProps) {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const { setSelectedEvent } = useEventContext();
+  const navigate = useNavigate();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -59,19 +61,19 @@ export function EventCard({
     // Selecionar o evento no contexto global
     setSelectedEvent(event);
     // Navegar para a lista de convidados
-    window.location.href = '/guest-list';
+    navigate('/guest-list');
   };
 
   const handleFinanceClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedEvent(event);
-    window.location.href = `/finances/${event.id}`;
+    navigate(`/finances/${event.id}`);
   };
 
   const handleContractClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedEvent(event);
-    window.location.href = `/contract/${event.id}`;
+    navigate(`/contract/${event.id}`);
   };
 
   return (
