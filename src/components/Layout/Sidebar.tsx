@@ -25,8 +25,6 @@ const navigation = [
   { name: 'Tarefas', href: '/tasks', icon: CheckSquare },
   { name: 'Fornecedores', href: '/vendors', icon: Building },
   { name: 'Convites', href: '/invitations', icon: Mail },
-  { name: 'Financeiro', href: '/finances', icon: DollarSign },
-  { name: 'Contrato', href: '/contract', icon: FileText },
   { name: 'Check-in', href: '/checklist', icon: ClipboardList },
   { name: 'Assistente IA', href: '/ai-assistant', icon: Bot },
   { name: 'Ajuda', href: '/help', icon: HelpCircle },
