@@ -3,9 +3,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { EventProvider } from "@/contexts/EventContext";
-import { AppLayout } from "@/components/Layout/AppLayout";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Events from "./pages/Events";
 import GuestList from "./pages/GuestList";
@@ -13,54 +12,53 @@ import GiftList from "./pages/GiftList";
 import Tasks from "./pages/Tasks";
 import Vendors from "./pages/Vendors";
 import Invitations from "./pages/Invitations";
+import EventFinances from "./pages/EventFinances";
+import EventContract from "./pages/EventContract";
+import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
+import PublicGuestForm from "./pages/PublicGuestForm";
+import PublicGiftList from "./pages/PublicGiftList";
 import Checklist from "./pages/Checklist";
 import AIAssistant from "./pages/AIAssistant";
 import Help from "./pages/Help";
-import Login from "./pages/Login";
-import PublicGuestForm from "./pages/PublicGuestForm";
-import PublicGiftList from "./pages/PublicGiftList";
-import EventFinances from "./pages/EventFinances";
-import EventContract from "./pages/EventContract";
-import NotFound from "./pages/NotFound";
+import { EventProvider } from "./contexts/EventContext";
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <EventProvider>
-              <Toaster />
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/public-guest-form/:eventId" element={<PublicGuestForm />} />
-                <Route path="/public-gift-list/:eventId" element={<PublicGiftList />} />
-                <Route path="/*" element={
-                  <AppLayout>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/events" element={<Events />} />
-                      <Route path="/guests" element={<GuestList />} />
-                      <Route path="/gift-list" element={<GiftList />} />
-                      <Route path="/tasks" element={<Tasks />} />
-                      <Route path="/vendors" element={<Vendors />} />
-                      <Route path="/invitations" element={<Invitations />} />
-                      <Route path="/checklist" element={<Checklist />} />
-                      <Route path="/ai-assistant" element={<AIAssistant />} />
-                      <Route path="/help" element={<Help />} />
-                      <Route path="/event/:eventId/finances" element={<EventFinances />} />
-                      <Route path="/event/:eventId/contract" element={<EventContract />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </AppLayout>
-                } />
-              </Routes>
-            </EventProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <AuthProvider>
+              <EventProvider>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="/guests" element={<GuestList />} />
+                  <Route path="/guest-list" element={<GuestList />} />
+                  <Route path="/gift-list" element={<GiftList />} />
+                  <Route path="/tasks" element={<Tasks />} />
+                  <Route path="/vendors" element={<Vendors />} />
+                  <Route path="/invitations" element={<Invitations />} />
+                  <Route path="/finances/:eventId" element={<EventFinances />} />
+                  <Route path="/contract/:eventId" element={<EventContract />} />
+                  <Route path="/checklist" element={<Checklist />} />
+                  <Route path="/ai-assistant" element={<AIAssistant />} />
+                  <Route path="/help" element={<Help />} />
+                  {/* Rotas públicas com caminhos absolutos para produção */}
+                  <Route path="/public-guest-form/:eventId" element={<PublicGuestForm />} />
+                  <Route path="/gift-list/:listId" element={<PublicGiftList />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </EventProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

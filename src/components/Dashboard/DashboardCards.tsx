@@ -98,7 +98,7 @@ export const DashboardCards = () => {
         value={guestCount}
         description={`${confirmedGuests} confirmados`}
         icon={<Users className="h-4 w-4 text-leju-pink" />}
-        linkTo="/guests"
+        linkTo="/guest-list"
         bgClass="border-l-4 border-l-leju-pink"
       />
       <DashboardCard

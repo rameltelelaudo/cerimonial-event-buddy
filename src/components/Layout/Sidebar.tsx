@@ -18,16 +18,16 @@ import {
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home, color: 'text-blue-500' },
-  { name: 'Eventos', href: '/events', icon: Calendar, color: 'text-green-500' },
-  { name: 'Lista de Convidados', href: '/guests', icon: Users, color: 'text-purple-500' },
-  { name: 'Lista de Presentes', href: '/gift-list', icon: Gift, color: 'text-pink-500' },
-  { name: 'Tarefas', href: '/tasks', icon: CheckSquare, color: 'text-orange-500' },
-  { name: 'Fornecedores', href: '/vendors', icon: Building, color: 'text-cyan-500' },
-  { name: 'Convites', href: '/invitations', icon: Mail, color: 'text-yellow-500' },
-  { name: 'Check-in', href: '/checklist', icon: ClipboardList, color: 'text-red-500' },
-  { name: 'Assistente IA', href: '/ai-assistant', icon: Bot, color: 'text-indigo-500' },
-  { name: 'Ajuda', href: '/help', icon: HelpCircle, color: 'text-gray-500' },
+  { name: 'Dashboard', href: '/', icon: Home },
+  { name: 'Eventos', href: '/events', icon: Calendar },
+  { name: 'Lista de Convidados', href: '/guests', icon: Users },
+  { name: 'Lista de Presentes', href: '/gift-list', icon: Gift },
+  { name: 'Tarefas', href: '/tasks', icon: CheckSquare },
+  { name: 'Fornecedores', href: '/vendors', icon: Building },
+  { name: 'Convites', href: '/invitations', icon: Mail },
+  { name: 'Check-in', href: '/checklist', icon: ClipboardList },
+  { name: 'Assistente IA', href: '/ai-assistant', icon: Bot },
+  { name: 'Ajuda', href: '/help', icon: HelpCircle },
 ];
 
 export const Sidebar: React.FC = () => {
@@ -67,7 +67,7 @@ export const Sidebar: React.FC = () => {
                 >
                   <item.icon
                     className={cn(
-                      isActive ? 'text-white' : item.color,
+                      isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500',
                       'mr-3 flex-shrink-0 h-6 w-6'
                     )}
                     aria-hidden="true"
