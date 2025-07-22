@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { AuthButton } from './AuthButton';
+import { Sidebar } from './Sidebar';
+import { Navbar } from './Navbar';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -8,14 +9,14 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen w-full">
-      <header className="flex h-16 items-center justify-between border-b px-6 bg-white">
-        <h1 className="text-xl font-semibold">Leju Assessoria</h1>
-        <AuthButton />
-      </header>
-      <main className="bg-gray-50">
-        {children}
-      </main>
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Navbar />
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 };
