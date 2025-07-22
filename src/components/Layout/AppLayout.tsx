@@ -1,8 +1,7 @@
 
 import React from 'react';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { ModernSidebar } from './ModernSidebar';
-import { Navbar } from './Navbar';
+import { AuthButton } from './AuthButton';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -10,21 +9,17 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <ModernSidebar />
-        <SidebarInset className="flex flex-col">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex-1">
-              <Navbar />
-            </div>
-          </header>
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
-        </SidebarInset>
+    <div className="flex min-h-screen w-full">
+      <ModernSidebar />
+      <div className="flex flex-col flex-1">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b px-6 bg-white">
+          <h1 className="text-xl font-semibold">Leju Assessoria</h1>
+          <AuthButton />
+        </header>
+        <main className="flex-1 overflow-auto bg-gray-50">
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 };
