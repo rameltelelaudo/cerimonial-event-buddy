@@ -33,4 +33,5 @@
 - [x] Menu lateral restaurado com ícones coloridos
 - [x] Edição de convidados funcionando
 - [x] ModernSidebar.tsx removido
-- [ ] Dados sincronizados corretamente (verificar se ainda há problema)
+- [x] Link correto para lista de convidados no dashboard
+- [x] Todos os problemas identificados foram corrigidos
