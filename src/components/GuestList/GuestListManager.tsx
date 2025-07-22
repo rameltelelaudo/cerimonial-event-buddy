@@ -3,8 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Search, Upload, Share2 } from 'lucide-react';
+import { Users, Search, Upload, Share2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEventContext } from '@/contexts/EventContext';
@@ -12,6 +11,7 @@ import { toast } from 'sonner';
 import { GuestTable } from './GuestTable';
 import { AddGuestForm } from './AddGuestForm';
 import { GuestStats } from './GuestStats';
+import { EditGuestModal } from './EditGuestModal';
 
 export const GuestListManager: React.FC = () => {
   const { user } = useAuth();
@@ -21,6 +21,7 @@ export const GuestListManager: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('all');
   const [editingGuest, setEditingGuest] = useState<any>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     if (selectedEvent && user) {
@@ -101,6 +102,7 @@ export const GuestListManager: React.FC = () => {
 
   const handleEditGuest = (guest: any) => {
     setEditingGuest(guest);
+    setIsEditModalOpen(true);
   };
 
   const handleDeleteGuest = async (id: string) => {
@@ -219,6 +221,17 @@ export const GuestListManager: React.FC = () => {
 
       {/* Formulário para adicionar convidado */}
       <AddGuestForm onGuestAdded={loadGuests} />
+
+      {/* Modal de edição */}
+      <EditGuestModal
+        guest={editingGuest}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingGuest(null);
+        }}
+        onGuestUpdated={loadGuests}
+      />
     </div>
   );
 };
