@@ -29,10 +29,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthProvider>
-          <EventProvider>
-            <Toaster />
-            <BrowserRouter>
+        <BrowserRouter>
+          <AuthProvider>
+            <EventProvider>
+              <Toaster />
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/public-guest-form/:eventId" element={<PublicGuestForm />} />
@@ -57,9 +57,9 @@ function App() {
                   </AppLayout>
                 } />
               </Routes>
-            </BrowserRouter>
-          </EventProvider>
-        </AuthProvider>
+            </EventProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
