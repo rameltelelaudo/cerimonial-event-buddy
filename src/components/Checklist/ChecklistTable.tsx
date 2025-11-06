@@ -16,16 +16,16 @@ export const ChecklistTable = ({ guests, onCheckIn, isMobile }: ChecklistTablePr
   
   if (isMobile) {
     return (
-      <div className="p-4">
-        <div className="mb-4 flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Convidados</h2>
-          <div className="text-sm text-muted-foreground">
-            {sortedGuests.filter(g => g.checkedIn).length}/{sortedGuests.length} confirmados
+      <div className="p-5">
+        <div className="mb-5 flex justify-between items-center">
+          <h2 className="text-2xl font-semibold">Convidados</h2>
+          <div className="text-lg text-muted-foreground font-medium">
+            {sortedGuests.filter(g => g.checkedIn).length}/{sortedGuests.length}
           </div>
         </div>
         
         {sortedGuests.length === 0 ? (
-          <p className="text-center py-4 text-muted-foreground">Nenhum convidado encontrado</p>
+          <p className="text-center py-8 text-muted-foreground text-lg">Nenhum convidado encontrado</p>
         ) : (
           <div className="space-y-3">
             {sortedGuests.map(guest => (
@@ -50,16 +50,16 @@ export const ChecklistTable = ({ guests, onCheckIn, isMobile }: ChecklistTablePr
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Nome</TableHead>
-          <TableHead>Acompanhantes</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Ação</TableHead>
+          <TableHead className="text-lg">Nome</TableHead>
+          <TableHead className="text-lg">Acompanhantes</TableHead>
+          <TableHead className="text-lg">Status</TableHead>
+          <TableHead className="text-lg">Ação</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {sortedGuests.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={4} className="text-center">Nenhum convidado encontrado</TableCell>
+            <TableCell colSpan={4} className="text-center text-lg py-8">Nenhum convidado encontrado</TableCell>
           </TableRow>
         ) : (
           sortedGuests.map(guest => (
